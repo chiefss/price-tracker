@@ -1,0 +1,77 @@
+spring:
+  config:
+    name: application
+  profiles:
+    include: custom
+  task:
+    scheduling:
+      pool:
+        size: 3
+  jpa:
+    show-sql: false
+    database-platform: org.hibernate.community.dialect.SQLiteDialect
+  datasource:
+    url: jdbc:sqlite:${app.database.path}
+    driver-class-name: org.sqlite.JDBC
+    username: "price-tracker"
+    password: ""
+  liquibase:
+    enabled: true
+    driver-class-name: org.postgresql.Driver
+    change-log: classpath:db/changelog/db.changelog-master.yml
+  security:
+    user:
+      name: ${app.username}
+      password: ${app.password}
+server:
+  servlet:
+    encoding:
+      enabled: true
+      charset: UTF-8
+  port: ${app.port}
+  address: ${app.address}
+
+app:
+  username: user
+  password:
+  port: 8080
+  address: 127.0.0.1
+  database:
+    path: price-tracker.db
+  mail:
+    enabled: false
+    debug: false
+    admin: ""
+    from: ""
+    host: ""
+    username: ""
+    password: ""
+    properties:
+      transport:
+        protocol: smtp
+      smtp:
+        port: 587
+        connectiontimeout: 3000
+        timeout: 3000
+        writetimeout: 3000
+        auth: true
+        starttls:
+          enable: true
+          required: true
+
+  parser:
+    cron:
+      enabled: true
+      initial-timeout: 3600000  # cron delay. 3600000 - one hour
+      interval: 43200000
+    connection:
+      headers:
+        useragent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.152 Safari/537.36"
+        accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"
+        accept-language: "en-US;q=0.5,en;q=0.3"
+        accept-encoding: "gzip, deflate"
+        dnt: "1"
+        connection: "keep-alive"
+        upgrade-insecure-requests: "1"
+        pragma: "no-cache"
+        cache-control: "no-cache"

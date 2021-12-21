@@ -1,0 +1,14 @@
+spring:
+  config:
+    name: application-tests
+  jpa:
+    show-sql: true
+  datasource:
+      url: "jdbc:sqlite::memory:"
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-tests.yml
+
+app:
+  parser:
+    cron:
+      enabled: false

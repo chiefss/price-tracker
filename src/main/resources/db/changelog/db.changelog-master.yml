@@ -1,0 +1,4 @@
+databaseChangeLog:
+  - include:
+      file: Migration_1_Initial.sql
+      relativeToChangelogFile: true
