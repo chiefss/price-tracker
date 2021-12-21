@@ -10,6 +10,13 @@ Track prices from websites.
 * Manual start of the collector.
 * Launch in service mode.
 
+## Screenshots
+
+### Main page:
+![Main page](screenshots/screenshot1.png "Main page")
+
+### Detail view:
+![Detail page](screenshots/screenshot2.png "Detail page")
 
 Installation
 ------------
