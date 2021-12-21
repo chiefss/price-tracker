@@ -1,0 +1,54 @@
+plugins {
+    id 'org.springframework.boot' version '2.5.5'
+    id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+    id 'java'
+}
+
+group = 'com.devel'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '11'
+
+repositories {
+    mavenCentral()
+}
+
+configurations {
+    developmentOnly
+    runtimeClasspath {
+        extendsFrom developmentOnly
+    }
+}
+
+dependencies {
+    implementation 'commons-io:commons-io:2.11.0'
+    implementation 'org.springframework.boot:spring-boot-starter:2.5.6'
+    implementation 'org.springframework.boot:spring-boot-starter-web:2.5.6'
+//    implementation 'org.springframework.boot:spring-boot-starter-security:2.5.5'
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf:2.5.6'
+    implementation 'org.springframework.boot:spring-boot-starter-webflux:2.5.6'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa:2.5.6'
+    implementation 'org.springframework.boot:spring-boot-starter-mail:2.5.6'
+    implementation 'org.springframework.security:spring-security-test:5.5.1'
+    implementation 'mysql:mysql-connector-java:8.0.25'
+    implementation 'org.projectlombok:lombok:1.18.22'
+    annotationProcessor 'org.projectlombok:lombok:1.18.22'
+    implementation 'org.hibernate:hibernate-validator:7.0.1.Final'
+//    implementation 'org.liquibase:liquibase-core:4.5.0'
+    implementation 'com.h2database:h2:1.4.200'
+    implementation 'com.google.code.gson:gson:2.8.9'
+    implementation 'org.jsoup:jsoup:1.14.3'
+    implementation 'org.thymeleaf.extras:thymeleaf-extras-java8time:3.0.4.RELEASE'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test:2.5.6'
+    testImplementation 'org.apache.httpcomponents:httpclient:4.5.13'
+
+    developmentOnly 'org.springframework.boot:spring-boot-devtools:2.5.6'
+}
+
+bootJar {
+    mainClass.set('com.devel.pricetracker.PriceTrackerApplication')
+}
+
+test {
+    useJUnitPlatform()
+}

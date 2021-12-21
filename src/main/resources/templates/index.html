@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Price tracker</title>
+
+    <style>
+        .f-green { color: #009500; }
+        .f-red { color: #d70000; }
+    </style>
+</head>
+<body>
+
+<div>
+    <a href="/">Main</a> /
+    <!--<a href="/h2-console" target="_blank">H2-console</a> /-->
+    <a href="/parseAll" onclick="return confirm('Are you sure you want to parse all?')">Parse all now</a>
+</div>
+
+<h2>Add Item</h2>
+<form action="/create" method="post">
+    <input type="text" name="name" placeholder="name" required>
+    <input type="text" name="url" placeholder="url" required>
+    <input type="text" name="selector" placeholder="selector" required>
+    <input type="text" name="break_selector" placeholder="break selector">
+    <label><input type="checkbox" name="parse_now"> parse now</label>
+    <input type="submit" value="Add">
+</form>
+
+<hr>
+
+<div th:if="${item}">
+    <h2>Item:</h2>
+    <form action="/update" method="post">
+        <input type="hidden" name="id" th:value="${item.getId()}">
+        <p th:text="'ID: ' + ${item.getId()}"></p>
+        <p th:text="'Date: ' + ${#temporals.format(item.getDateFrom(), 'd MMM Y')}"></p>
+
+        <p>
+            <div th:text="'Name: ' + ${item.getName()}"></div>
+            <input type="text" name="name" th:value="${item.getName()}">
+        </p>
+        <p>
+            <div>Url: <a th:href="${item.getUrl()}" th:text="${item.getUrl()}" target="_blank"></a></div>
+            <input type="text" name="url" th:value="${item.getUrl()}">
+        </p>
+        <p>
+            <div th:text="'Selector: ' + ${item.getSelector()}"></div>
+            <input type="text" name="selector" th:value="${item.getSelector()}">
+        </p>
+        <p>
+            <div th:text="'Break selector: ' + ${item.getBreakSelector()}"></div>
+            <input type="text" name="break_selector" th:value="${item.getBreakSelector()}">
+        </p>
+        <label><input type="checkbox" name="parse_now"> parse now</label>
+        <input type="submit" value="Update">
+    </form>
+
+    <div id="chart"></div>
+
+    <p>Prices:</p>
+    <div th:if="${item.getFormatedLastPrice().length() > 0}">
+        <p>
+            Last price:
+            <span th:text="${item.getFormatedLastPrice()}"></span>
+            <span th:if="${item.isDeltaPlus()}" th:text="'(+' + ${item.getFormatedDelta()} + ')'" class="f-red"></span>
+            <span th:if="${item.isDeltaMinus()}" th:text="'(-' + ${item.getFormatedDelta()} + ')'" class="f-green"></span>
+        </p>
+    </div>
+    <table border="1px" cellpadding="10px" cellspacing="0" class="prices">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Price</th>
+            </tr>
+        </thead>
+        <tbody>
+            <th:block th:each="price : ${prices}">
+                <tr th:data-price-date="${#temporals.format(price.getDateFrom(), 'd MMM Y')}" th:data-price-value="${price.getPrice()}">
+                    <td th:text="${#temporals.format(price.getDateFrom(), 'd MMM Y')}"></td>
+                    <td th:text="${price.getFormatedPrice()}"></td>
+                </tr>
+            </th:block>
+        </tbody>
+    </table>
+
+    <hr>
+</div>
+
+<div th:if="${items.size() > 0}">
+    <h2>Item list:</h2>
+    <table border="1px" cellpadding="10px" cellspacing="0">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Url</th>
+                <th>Price (Delta)</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            <th:block th:each="item : ${items}">
+                <tr>
+                    <td>
+                        <span th:text="${item.getId()}"></span>
+                    </td>
+                    <td>
+                        <a th:href="'/view/' + ${{item.getId()}}">
+                            <span th:text="${item.getName()}"></span>
+                        </a>
+                    </td>
+                    <td>
+                        <a th:href="${item.getUrl()}" target="_blank" th:text="${item.getHost()}"></a>
+                    </td>
+                    <td nowrap>
+                        <span th:text="${item.getFormatedLastPrice()}"></span>
+                        <span th:if="${item.isDeltaPlus()}" th:text="'(+' + ${item.getFormatedDelta()} + ')'" class="f-red"></span>
+                        <span th:if="${item.isDeltaMinus()}" th:text="'(-' + ${item.getFormatedDelta()} + ')'" class="f-green"></span>
+                    </td>
+                    <td>
+                        <form th:action="'/delete/' + ${{item.getId()}}" method="post" onsubmit="return confirm('Are you sure you want to delete?');">
+                            <input type="submit" th:value="X">
+                        </form>
+                    </td>
+                </tr>
+            </th:block>
+        </tbody>
+    </table>
+</div>
+
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script type="text/javascript">
+    document.addEventListener('DOMContentLoaded', function () {
+        function drawChart() {
+            let chartValues = [
+                ['Date', 'Price'],
+            ];
+            for (let i = priceElements.length - 1; i >= 0; i--) {
+                let priceElement = priceElements[i];
+                chartValues.push([priceElement.getAttribute("data-price-date"), parseFloat(priceElement.getAttribute("data-price-value"))])
+            }
+            let data = google.visualization.arrayToDataTable(chartValues);
+
+            let options = {
+                title: 'Item prices',
+                pointSize: 7,
+                hAxis: {title: 'Date',  titleTextStyle: {color: '#333'}},
+                // vAxis: {minValue: 0}
+            };
+
+            var chart = new google.visualization.AreaChart(chartElement);
+            chart.draw(data, options);
+        }
+        let priceElements = document.querySelectorAll('.prices tbody tr');
+        let chartElement = document.getElementById('chart');
+        if (chartElement && priceElements.length > 0) {
+            chartElement.style.width = "100%";
+            chartElement.style.height = "500px";
+            google.charts.load('current', {'packages':['corechart']});
+            google.charts.setOnLoadCallback(drawChart);
+        }
+    });
+</script>
+
+
+</body>
+</html>
