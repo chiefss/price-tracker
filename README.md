@@ -103,4 +103,15 @@ RestartSec=5
 WantedBy=multi-user.target
 ```
 
+Run service
+```bash
+$ sudo systemctl start price-tracker.service
+```
+
+Enable autorun
+```bash
+$ sudo systemctl enable price-tracker.service
+```
+
+
 Run web browser http://localhost:8080
