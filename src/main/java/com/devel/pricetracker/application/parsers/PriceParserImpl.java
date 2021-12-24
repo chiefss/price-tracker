@@ -45,26 +45,32 @@ public class PriceParserImpl implements PriceParser {
                     if (isPriceReduced(itemPriceEntities)) {
                         Float itemPriceEntityCurrent = itemPriceEntities.get(0).getPrice();
                         Float itemPriceEntityPrev = itemPriceEntities.get(1).getPrice();
-                        reducedPriceMessages.add(String.format("\"%s\" with id \"%d\" change price to %s (-%s) url \"%s\"\n",
-                                itemEntity.getName(), itemEntity.getId(),
-                                CurrencyUtils.formatCurrency(itemPriceEntityCurrent),
-                                CurrencyUtils.formatCurrency(itemPriceEntityPrev - itemPriceEntityCurrent),
-                                itemEntity.getUrl()));
+                        reducedPriceMessages.add(String.format("\"%s\" with id \"%d\" change price to %s (-%s) url \"%s\"",
+                            itemEntity.getName(), itemEntity.getId(),
+                            CurrencyUtils.formatCurrency(itemPriceEntityCurrent),
+                            CurrencyUtils.formatCurrency(itemPriceEntityPrev - itemPriceEntityCurrent),
+                            itemEntity.getUrl()));
                     }
                 }
             } catch (NotFoundException | IOException e) {
-                errorMessages.add(String.format("\"%s\" with id \"%d\", message: \"%s\"", itemEntity.getName(), itemEntity.getId(), e.getMessage()));
+                errorMessages.add(String.format("\"%s\" with id \"%d\", error: \"%s\"", itemEntity.getName(), itemEntity.getId(), e.getMessage()));
             }
         }
+        notify(reducedPriceMessages, errorMessages);
+    }
+
+    private void notify(List<String> reducedPriceMessages, List<String> errorMessages) {
+        StringJoiner subject = new StringJoiner(", ");
+        StringJoiner body = new StringJoiner("\n\n");
+        subject.add(String.format("[Price tracker] Price reporting. Reduced %d", reducedPriceMessages.size()));
         if (reducedPriceMessages.size() > 0) {
-            String subject = String.format("[Price tracker] Item prices reduced (%d)", reducedPriceMessages.size());
-            mailService.sendAdmin(subject, String.join("\n", reducedPriceMessages));
+            body.add(String.format("Reduced:\n\n%s", String.join("\n\n", reducedPriceMessages)));
         }
         if (errorMessages.size() > 0) {
-            String subject = String.format("[Price tracker] Item data load problems (%d)", errorMessages.size());
-            String body = String.format("Errors:\n\n %s", String.join("\n", errorMessages));
-            mailService.sendAdmin(subject, body);
+            subject.add(String.format("errors %d", errorMessages.size()));
+            body.add(String.format("Errors:\n\n%s", String.join("\n", errorMessages)));
         }
+        mailService.sendAdmin(subject.toString(), body.toString());
     }
 
     public boolean parse(ItemEntity itemEntity) throws IOException, NotFoundException {
