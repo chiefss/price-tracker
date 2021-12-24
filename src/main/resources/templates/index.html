@@ -32,7 +32,7 @@
 
 <hr>
 
-<div th:if="${item}">
+<div th:if="${item}" id="item-detail" th:data-id="${item.getId()}">
     <h2>Item:</h2>
     <form action="/update" method="post">
         <input type="hidden" name="id" th:value="${item.getId()}">
@@ -135,13 +135,17 @@
 <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
 <script type="text/javascript">
     document.addEventListener('DOMContentLoaded', function () {
+        let priceElements = [];
+        let chartElement = document.getElementById('chart');
         function drawChart() {
             let chartValues = [
                 ['Date', 'Price'],
             ];
             for (let i = priceElements.length - 1; i >= 0; i--) {
                 let priceElement = priceElements[i];
-                chartValues.push([priceElement.getAttribute("data-price-date"), parseFloat(priceElement.getAttribute("data-price-value"))])
+                let dateFrom = new Date(priceElement.dateFrom);
+                let date = dateFrom.getDate() + "." + (dateFrom.getMonth() + 1) + "." + dateFrom.getFullYear();
+                chartValues.push([date, parseFloat(priceElement.price)])
             }
             let data = google.visualization.arrayToDataTable(chartValues);
 
@@ -155,14 +159,19 @@
             var chart = new google.visualization.AreaChart(chartElement);
             chart.draw(data, options);
         }
-        let priceElements = document.querySelectorAll('.prices tbody tr');
-        let chartElement = document.getElementById('chart');
-        if (chartElement && priceElements.length > 0) {
-            chartElement.style.width = "100%";
-            chartElement.style.height = "500px";
-            google.charts.load('current', {'packages':['corechart']});
-            google.charts.setOnLoadCallback(drawChart);
-        }
+
+        let pricesUrl = "/api/prices/" + document.querySelector("#item-detail").getAttribute("data-id");
+        let responsePromise = fetch(pricesUrl)
+            .then(value => value.json());
+        responsePromise.then(value => {
+            priceElements = value;
+            if (chartElement && priceElements.length > 0) {
+                chartElement.style.width = "100%";
+                chartElement.style.height = "500px";
+                google.charts.load('current', {'packages':['corechart']});
+                google.charts.setOnLoadCallback(drawChart);
+            }
+        })
     });
 </script>
 
