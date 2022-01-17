@@ -93,7 +93,7 @@ public class PriceParserImpl implements PriceParser {
             itemPriceService.create(itemPriceEntity);
         } catch (NotFoundException e) {
             String breakSelector = itemEntity.getBreakSelector();
-            if (breakSelector != null && findItemPriceBreak(itemDocument, breakSelector)) {
+            if (breakSelector != null && breakSelector.length() > 0 && findItemPriceBreak(itemDocument, breakSelector)) {
                 logger.info(String.format("Item with id \"%s\" found break selector \"%s\"", itemEntity.getId(), breakSelector));
                 return false;
             } else {
