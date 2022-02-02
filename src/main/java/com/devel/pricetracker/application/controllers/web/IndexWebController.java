@@ -124,6 +124,26 @@ public class IndexWebController {
         return "redirect:/";
     }
 
+    @PostMapping("/activate/{id}")
+    public String activateAction(@PathVariable Long id) {
+        try {
+            itemService.activate(id);
+        } catch (NotFoundException e) {
+            logger.warn(String.format("An error occurred during activate item with id \"%d\"", id));
+        }
+        return "redirect:/";
+    }
+
+    @PostMapping("/deactivate/{id}")
+    public String deactivateAction(@PathVariable Long id) {
+        try {
+            itemService.deactivate(id);
+        } catch (NotFoundException e) {
+            logger.warn(String.format("An error occurred during deactivate item with id \"%d\"", id));
+        }
+        return "redirect:/";
+    }
+
     @GetMapping("/parseAll")
     public String parseAllAction() {
         priceParser.parseAll();
@@ -131,7 +151,7 @@ public class IndexWebController {
     }
 
     private List<ItemDtoView> getItemDtos() {
-        List<ItemEntity> itemEntities = itemService.findAll();
+        List<ItemEntity> itemEntities = itemService.findAll(false);
         List<ItemDtoView> itemDtoViews = new ArrayList<>();
         for (ItemEntity itemEntity : itemEntities) {
             ItemDtoView itemDtoView = getItemDto(itemEntity);

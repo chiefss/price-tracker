@@ -30,8 +30,14 @@ public class TestItemService {
 
     @Test
     public void testFindAll() {
-        List<ItemEntity> itemEntities = itemService.findAll();
+        List<ItemEntity> itemEntities = itemService.findAll(false);
         Assertions.assertEquals(5, itemEntities.size());
+    }
+
+    @Test
+    public void testFindAllActivatedOnly() {
+        List<ItemEntity> itemEntities = itemService.findAll(true);
+        Assertions.assertEquals(4, itemEntities.size());
     }
 
     @Test

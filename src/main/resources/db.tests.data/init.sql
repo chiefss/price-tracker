@@ -8,7 +8,7 @@ values (1, 'name 1', 'url 1', 'selector 1', 'break selector 1', '2000-01-01 10:1
        (2, 'name 2', 'url 2', 'selector 2', 'break selector 2', '2000-01-01 10:10:11', null),
        (3, 'name 3', 'url 3', 'selector 3', 'break selector 3', '2000-01-01 10:10:12', null),
        (4, 'name 4', 'url 4', 'selector 4', 'break selector 4', '2000-01-01 10:10:13', null),
-       (5, 'name 5', 'url 5', 'selector 5', 'break selector 5', '2000-01-01 10:10:14', null);
+       (5, 'name 5', 'url 5', 'selector 5', 'break selector 5', '2000-01-01 10:10:14', '2000-01-01 10:10:14');
 
 insert into item_price (id, item_id, price, date_from)
 values (1, 1, '123.5', '2000-01-01 10:10:10'),

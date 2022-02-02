@@ -10,6 +10,9 @@
     <style>
         .f-green { color: #009500; }
         .f-red { color: #d70000; }
+        .f-grey { color: #ccc; }
+        .item-list-controls { display: flex; justify-content: right; }
+        .item-list-controls input { margin: 0 3px; }
     </style>
 </head>
 <body>
@@ -110,7 +113,8 @@
                     </td>
                     <td>
                         <a th:href="'/view/' + ${{item.getId()}}">
-                            <span th:text="${item.getName()}"></span>
+                            <span th:text="${item.getName()}" th:if="${item.getDateTo() == null}"></span>
+                            <span th:text="${item.getName()}" th:if="${item.getDateTo() != null}" class="f-grey"></span>
                         </a>
                     </td>
                     <td>
@@ -121,7 +125,13 @@
                         <span th:if="${item.isDeltaPlus()}" th:text="'(+' + ${item.getFormatedDelta()} + ')'" class="f-red"></span>
                         <span th:if="${item.isDeltaMinus()}" th:text="'(-' + ${item.getFormatedDelta()} + ')'" class="f-green"></span>
                     </td>
-                    <td>
+                    <td class="item-list-controls">
+                        <form th:if="${item.getDateTo() != null}" th:action="'/activate/' + ${{item.getId()}}" method="post">
+                            <input type="submit" th:value="Activate">
+                        </form>
+                        <form th:if="${item.getDateTo() == null}" th:action="'/deactivate/' + ${{item.getId()}}" method="post">
+                            <input type="submit" th:value="Deactivate">
+                        </form>
                         <form th:action="'/delete/' + ${{item.getId()}}" method="post" onsubmit="return confirm('Are you sure you want to delete?');">
                             <input type="submit" th:value="X">
                         </form>

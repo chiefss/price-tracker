@@ -10,9 +10,11 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class ItemServiceImpl implements ItemService {
@@ -24,11 +26,14 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public List<ItemEntity> findAll() {
+    public List<ItemEntity> findAll(boolean activatedOnly) {
         Iterable<ItemEntity> itemEntityIterable = itemRepository.findAll(Sort.by("name").ascending());
         List<ItemEntity> itemEntities = new ArrayList<>();
         for (ItemEntity itemEntity : itemEntityIterable) {
             itemEntities.add(itemEntity);
+        }
+        if (activatedOnly) {
+            itemEntities = itemEntities.stream().filter(itemEntity -> itemEntity.getDateTo() == null).collect(Collectors.toList());
         }
         return itemEntities;
     }
@@ -76,6 +81,32 @@ public class ItemServiceImpl implements ItemService {
         } catch (NotFoundException e) {
             logger.error(String.format("An error occurred during delete Item with id: %d", itemId));
             throw new NotFoundException(String.format("An error occurred during delete Item with id: %d", itemId), e);
+        }
+    }
+
+    @Override
+    public Long activate(Long itemId) throws NotFoundException {
+        try {
+            ItemEntity itemEntity = find(itemId);
+            itemEntity.setDateTo(null);
+            itemRepository.save(itemEntity);
+            return itemId;
+        } catch (NotFoundException e) {
+            logger.error(String.format("An error occurred during activate Item with id: %d", itemId));
+            throw new NotFoundException(String.format("An error occurred during activate Item with id: %d", itemId), e);
+        }
+    }
+
+    @Override
+    public Long deactivate(Long itemId) throws NotFoundException {
+        try {
+            ItemEntity itemEntity = find(itemId);
+            itemEntity.setDateTo(LocalDateTime.now());
+            itemRepository.save(itemEntity);
+            return itemId;
+        } catch (NotFoundException e) {
+            logger.error(String.format("An error occurred during deactivate Item with id: %d", itemId));
+            throw new NotFoundException(String.format("An error occurred during deactivate Item with id: %d", itemId), e);
         }
     }
 

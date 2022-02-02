@@ -34,7 +34,7 @@ public class PriceParserImpl implements PriceParser {
     }
 
     public void parseAll() {
-        List<ItemEntity> itemEntities = itemService.findAll();
+        List<ItemEntity> itemEntities = itemService.findAll(true);
         List<String> reducedPriceMessages = new ArrayList<>();
         List<String> errorMessages = new ArrayList<>();
         for (ItemEntity itemEntity : itemEntities) {
