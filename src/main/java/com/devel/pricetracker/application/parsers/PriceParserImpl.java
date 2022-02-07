@@ -56,7 +56,9 @@ public class PriceParserImpl implements PriceParser {
                 errorMessages.add(String.format("\"%s\" with id \"%d\", error: \"%s\"", itemEntity.getName(), itemEntity.getId(), e.getMessage()));
             }
         }
-        notify(reducedPriceMessages, errorMessages);
+        if (reducedPriceMessages.size() > 0 || errorMessages.size() > 0) {
+            notify(reducedPriceMessages, errorMessages);
+        }
     }
 
     private void notify(List<String> reducedPriceMessages, List<String> errorMessages) {
