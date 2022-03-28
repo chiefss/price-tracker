@@ -22,6 +22,8 @@ import java.net.URL;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 @Component
@@ -148,7 +150,12 @@ public class PriceParserImpl implements PriceParser {
             throw new NotFoundException("Item price element not found");
         }
         String html = element.html();
-        return html.replaceAll("[^0-9]", "");
+        Pattern pattern = Pattern.compile("^[0-9,.]+");
+        Matcher matcher = pattern.matcher(html);
+        if (matcher.find()) {
+            return html.substring(matcher.start(), matcher.end()).replace(",", ".");
+        }
+        throw new NotFoundException("Item price not found");
     }
 
     private boolean findItemPriceBreak(Element item, String selector) {
