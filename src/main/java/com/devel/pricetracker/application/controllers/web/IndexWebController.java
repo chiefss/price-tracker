@@ -57,7 +57,8 @@ public class IndexWebController {
             return "redirect:/";
         }
         itemDtoView = getItemDto(itemEntity);
-        List<ItemPriceDtoView> itemPriceDtoViews = itemPriceService.findAll(itemEntity).stream().limit(DETAIL_PRICES_LIMIT).map(itemPriceEntity -> ItemPriceDtoViewFactory.create(itemPriceEntity)).collect(Collectors.toList());
+        List<ItemPriceDtoView> itemPriceDtoViews = itemPriceService.findAll(itemEntity).stream().limit(DETAIL_PRICES_LIMIT)
+                .map(itemPriceEntity -> ItemPriceDtoViewFactory.create(itemPriceEntity)).collect(Collectors.toList());
         itemPriceDtoViews.forEach(itemPriceDto -> itemPriceDto.setFormatedPrice(CurrencyUtils.formatCurrency(itemPriceDto.getPrice())));
         List<ItemDtoView> itemDtoViews = getItemDtos();
         model.addAttribute("item", itemDtoView);
