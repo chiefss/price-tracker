@@ -47,7 +47,7 @@ public class TestItemPriceService {
 
     @Test
     public void testCreate() {
-        Long expectedId = 9L;
+        Long expectedId = 18L;
         ItemEntity itemEnity = new ItemEntity();
         itemEnity.setId(1L);
         ItemPriceEntity itemPriceEntity = new ItemPriceEntity(1000L, itemEnity, (float) 222.3, LocalDateTime.now());
