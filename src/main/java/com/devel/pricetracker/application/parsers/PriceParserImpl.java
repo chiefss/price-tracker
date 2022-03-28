@@ -92,7 +92,10 @@ public class PriceParserImpl implements PriceParser {
             itemPriceEntity.setItem(itemEntity);
             itemPriceEntity.setDateFrom(LocalDateTime.now());
             itemPriceEntity.setPrice(Float.valueOf(priceValue));
-            itemPriceService.create(itemPriceEntity);
+            List<ItemPriceEntity> itemPriceEntityList = itemPriceService.findLast(itemEntity);
+            if (itemPriceEntityList.size() == 0 || !itemPriceEntity.getPrice().equals(itemPriceEntityList.get(0).getPrice())) {
+                itemPriceService.create(itemPriceEntity);
+            }
         } catch (NotFoundException e) {
             String breakSelector = itemEntity.getBreakSelector();
             if (breakSelector != null && breakSelector.length() > 0 && findItemPriceBreak(itemDocument, breakSelector)) {
