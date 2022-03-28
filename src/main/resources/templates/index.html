@@ -175,18 +175,21 @@
             chart.draw(data, options);
         }
 
-        let pricesUrl = "/api/prices/" + document.querySelector("#item-detail").getAttribute("data-id");
-        let responsePromise = fetch(pricesUrl)
-            .then(value => value.json());
-        responsePromise.then(value => {
-            priceElements = value;
-            if (chartElement && priceElements.length > 0) {
-                chartElement.style.width = "100%";
-                chartElement.style.height = "500px";
-                google.charts.load('current', {'packages':['corechart']});
-                google.charts.setOnLoadCallback(drawChart);
-            }
-        })
+        let itemDetailElement = document.querySelector("#item-detail");
+        if (itemDetailElement != null) {
+            let pricesUrl = "/api/prices/" + itemDetailElement.getAttribute("data-id");
+            let responsePromise = fetch(pricesUrl)
+                .then(value => value.json());
+            responsePromise.then(value => {
+                priceElements = value;
+                if (chartElement && priceElements.length > 0) {
+                    chartElement.style.width = "100%";
+                    chartElement.style.height = "500px";
+                    google.charts.load('current', {'packages': ['corechart']});
+                    google.charts.setOnLoadCallback(drawChart);
+                }
+            });
+        }
     });
 </script>
 
