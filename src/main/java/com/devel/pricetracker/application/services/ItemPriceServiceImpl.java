@@ -44,6 +44,11 @@ public class ItemPriceServiceImpl implements ItemPriceService {
         return newEntity;
     }
 
+    public Long delete(ItemPriceEntity itemPriceEntity) {
+        itemPriceRepository.delete(itemPriceEntity);
+        return 1L;
+    }
+
     @Override
     @Transactional
     public Long deleteAll(ItemEntity itemEntity) {

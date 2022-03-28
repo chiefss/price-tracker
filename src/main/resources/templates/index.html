@@ -72,6 +72,9 @@
             <span th:if="${item.isDeltaPlus()}" th:text="'(+' + ${item.getFormatedDelta()} + ')'" class="f-red"></span>
             <span th:if="${item.isDeltaMinus()}" th:text="'(-' + ${item.getFormatedDelta()} + ')'" class="f-green"></span>
         </p>
+        <p>
+            <a th:href="'/prices/clean/' + ${item.getId()}">Clean duplicates</a>
+        </p>
     </div>
     <table border="1px" cellpadding="10px" cellspacing="0" class="prices">
         <thead>

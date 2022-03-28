@@ -1,6 +1,8 @@
 package com.devel.pricetracker.rest.web;
 
 import com.devel.pricetracker.application.models.entities.ItemEntity;
+import com.devel.pricetracker.application.models.entities.ItemPriceEntity;
+import com.devel.pricetracker.application.models.repository.ItemPriceRepository;
 import com.devel.pricetracker.application.models.repository.ItemRepository;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
@@ -16,7 +18,7 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
-import java.net.URI;
+import java.util.List;
 import java.util.Optional;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -26,9 +28,10 @@ import java.util.Optional;
 public class TestIndexWebController {
 
     @Autowired
-    public TestIndexWebController(TestRestTemplate testRestTemplate, ItemRepository itemRepository) {
+    public TestIndexWebController(TestRestTemplate testRestTemplate, ItemRepository itemRepository, ItemPriceRepository itemPriceRepository) {
         this.restTemplate = testRestTemplate;
         this.itemRepository = itemRepository;
+        this.itemPriceRepository = itemPriceRepository;
     }
 
     @BeforeAll
@@ -109,6 +112,21 @@ public class TestIndexWebController {
         Assertions.assertTrue(itemEntityOptional.isEmpty());
     }
 
+    @Test
+    public void testClean() {
+        long id = 4L;
+        HttpHeaders headers = new HttpHeaders();
+        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(headers);
+        ResponseEntity<String> response = restTemplate.exchange(baseUrl + "/prices/clean/{id}", HttpMethod.GET, request, String.class, id);
+        ItemEntity itemEntity = new ItemEntity();
+        itemEntity.setId(id);
+        List<ItemPriceEntity> itemPriceEntities = itemPriceRepository.findAllByItemOrderByDateFromDesc(itemEntity);
+
+        Assertions.assertEquals(HttpStatus.FOUND, response.getStatusCode());
+        Assertions.assertEquals(String.format("/view/%d", id), response.getHeaders().getLocation().getPath());
+        Assertions.assertEquals(6, itemPriceEntities.size());
+    }
+
     @LocalServerPort
     private int port;
 
@@ -117,4 +135,6 @@ public class TestIndexWebController {
     private final TestRestTemplate restTemplate;
 
     private final ItemRepository itemRepository;
+
+    private final ItemPriceRepository itemPriceRepository;
 }

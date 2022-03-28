@@ -61,20 +61,6 @@ public class PriceParserImpl implements PriceParser {
         }
     }
 
-    private void notify(List<String> reducedPriceMessages, List<String> errorMessages) {
-        StringJoiner subject = new StringJoiner(", ");
-        StringJoiner body = new StringJoiner("\n\n");
-        subject.add(String.format("[Price tracker] Price reporting. Reduced %d", reducedPriceMessages.size()));
-        if (reducedPriceMessages.size() > 0) {
-            body.add(String.format("Reduced:\n\n%s", String.join("\n\n", reducedPriceMessages)));
-        }
-        if (errorMessages.size() > 0) {
-            subject.add(String.format("errors %d", errorMessages.size()));
-            body.add(String.format("Errors:\n\n%s", String.join("\n", errorMessages)));
-        }
-        mailService.sendAdmin(subject.toString(), body.toString());
-    }
-
     public boolean parse(ItemEntity itemEntity) throws IOException, NotFoundException {
         String url = itemEntity.getUrl();
         try {
@@ -128,6 +114,20 @@ public class PriceParserImpl implements PriceParser {
             return response.parse();
         }
         throw new HttpStatusException("An error occurred during load page", statusCode, url.toString());
+    }
+
+    private void notify(List<String> reducedPriceMessages, List<String> errorMessages) {
+        StringJoiner subject = new StringJoiner(", ");
+        StringJoiner body = new StringJoiner("\n\n");
+        subject.add(String.format("[Price tracker] Price reporting. Reduced %d", reducedPriceMessages.size()));
+        if (reducedPriceMessages.size() > 0) {
+            body.add(String.format("Reduced:\n\n%s", String.join("\n\n", reducedPriceMessages)));
+        }
+        if (errorMessages.size() > 0) {
+            subject.add(String.format("errors %d", errorMessages.size()));
+            body.add(String.format("Errors:\n\n%s", String.join("\n", errorMessages)));
+        }
+        mailService.sendAdmin(subject.toString(), body.toString());
     }
 
     private String findItemPrice(Document itemDocument, ItemEntity itemEntity) throws NotFoundException {

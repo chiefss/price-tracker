@@ -11,5 +11,6 @@ public interface ItemPriceService {
     public List<ItemPriceEntity> findAll(ItemEntity itemEntity);
     public List<ItemPriceEntity> findLast(ItemEntity itemEntity);
     public ItemPriceEntity create(ItemPriceEntity itemPriceEntity);
+    public Long delete(ItemPriceEntity itemPriceEntity);
     public Long deleteAll(ItemEntity itemEntity);
 }

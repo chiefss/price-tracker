@@ -145,10 +145,38 @@ public class IndexWebController {
         return "redirect:/";
     }
 
+    @GetMapping("/prices/clean/{id}")
+    public String cleanAction(@PathVariable Long id) throws NotFoundException {
+        ItemEntity itemEntity = itemService.find(id);
+        cleanPriceDuplicates(itemEntity);
+        return String.format("redirect:/view/%d", itemEntity.getId());
+    }
+
+    @GetMapping("/prices/cleanall")
+    public String cleanAllAction() throws NotFoundException {
+        List<ItemEntity> itemEntities = itemService.findAll(false);
+        for (ItemEntity itemEntity : itemEntities) {
+            cleanPriceDuplicates(itemEntity);
+        }
+        return "redirect:/";
+    }
+
     @GetMapping("/parseAll")
     public String parseAllAction() {
         priceParser.parseAll();
         return "redirect:/";
+    }
+
+    private void cleanPriceDuplicates(ItemEntity itemEntity) {
+        List<ItemPriceEntity> itemPriceEntities = itemPriceService.findAll(itemEntity);
+        Float prevValue = null;
+        for (ItemPriceEntity itemPriceEntity : itemPriceEntities) {
+            Float currentValue = itemPriceEntity.getPrice();
+            if (currentValue.equals(prevValue)) {
+                itemPriceService.delete(itemPriceEntity);
+            }
+            prevValue = currentValue;
+        }
     }
 
     private List<ItemDtoView> getItemDtos() {
