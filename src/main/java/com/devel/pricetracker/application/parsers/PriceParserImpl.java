@@ -1,10 +1,10 @@
 package com.devel.pricetracker.application.parsers;
 
+import com.devel.pricetracker.application.dto.PriceParserResultDto;
 import com.devel.pricetracker.application.models.entities.ItemEntity;
 import com.devel.pricetracker.application.models.entities.ItemPriceEntity;
 import com.devel.pricetracker.application.services.ItemPriceService;
 import com.devel.pricetracker.application.services.ItemService;
-import com.devel.pricetracker.application.services.MailService;
 import com.devel.pricetracker.application.utils.Constants;
 import com.devel.pricetracker.application.utils.CurrencyUtils;
 import javassist.NotFoundException;
@@ -22,23 +22,19 @@ import java.net.URL;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 
 @Component
 public class PriceParserImpl implements PriceParser {
 
-    public PriceParserImpl(ItemService itemService, ItemPriceService itemPriceService, MailService mailService) {
+    public PriceParserImpl(ItemService itemService, ItemPriceService itemPriceService) {
         this.itemService = itemService;
         this.itemPriceService = itemPriceService;
-        this.mailService = mailService;
     }
 
-    public void parseAll() {
+    public PriceParserResultDto parseAll() {
         List<ItemEntity> itemEntities = itemService.findAll(true);
-        List<String> reducedPriceMessages = new ArrayList<>();
-        List<String> errorMessages = new ArrayList<>();
+        PriceParserResultDto priceParserResultDto = new PriceParserResultDto();
         for (ItemEntity itemEntity : itemEntities) {
             try {
                 boolean parsed = parse(itemEntity);
@@ -47,7 +43,7 @@ public class PriceParserImpl implements PriceParser {
                     if (isPriceReduced(itemPriceEntities)) {
                         Float itemPriceEntityCurrent = itemPriceEntities.get(0).getPrice();
                         Float itemPriceEntityPrev = itemPriceEntities.get(1).getPrice();
-                        reducedPriceMessages.add(String.format("\"%s\" with id \"%d\" change price to %s (-%s) url \"%s\"",
+                        priceParserResultDto.addReduceMessage(String.format("\"%s\" with id \"%d\" change price to %s (-%s) url \"%s\"",
                             itemEntity.getName(), itemEntity.getId(),
                             CurrencyUtils.formatCurrency(itemPriceEntityCurrent),
                             CurrencyUtils.formatCurrency(itemPriceEntityPrev - itemPriceEntityCurrent),
@@ -55,39 +51,34 @@ public class PriceParserImpl implements PriceParser {
                     }
                 }
             } catch (NotFoundException | IOException e) {
-                errorMessages.add(String.format("\"%s\" with id \"%d\", error: \"%s\"", itemEntity.getName(), itemEntity.getId(), e.getMessage()));
+                priceParserResultDto.addErrorMessage(String.format("\"%s\" with id \"%d\", error: \"%s\"", itemEntity.getName(), itemEntity.getId(), e.getMessage()));
             }
         }
-        if (reducedPriceMessages.size() > 0 || errorMessages.size() > 0) {
-            notify(reducedPriceMessages, errorMessages);
-        }
+        return priceParserResultDto;
     }
 
     public boolean parse(ItemEntity itemEntity) throws IOException, NotFoundException {
-        String url = itemEntity.getUrl();
         try {
             int sleepTime = ThreadLocalRandom.current().nextInt(Constants.PARSER_THREAD_SLEEP_MIN_SECOND, Constants.PARSER_THREAD_SLEEP_MAX_SECOND + 1) * 1000;
             Thread.sleep(sleepTime);
         } catch (InterruptedException e) {
             logger.error(String.format("An error occurred during sleep parser thread: %s", e.getMessage()));
         }
-
-        URL itemUrl = new URL(url);
+        URL itemUrl = new URL(itemEntity.getUrl());
         Document itemDocument = loadContent(itemUrl);
         try {
-            String priceValue = findItemPrice(itemDocument, itemEntity);
+            String priceValue = findDocumentPrice(itemDocument, itemEntity.getSelector());
             ItemPriceEntity itemPriceEntity = new ItemPriceEntity();
             itemPriceEntity.setItem(itemEntity);
             itemPriceEntity.setDateFrom(LocalDateTime.now());
             itemPriceEntity.setPrice(Float.valueOf(priceValue));
-            List<ItemPriceEntity> itemPriceEntityList = itemPriceService.findLast(itemEntity);
-            if (itemPriceEntityList.size() == 0 || !itemPriceEntity.getPrice().equals(itemPriceEntityList.get(0).getPrice())) {
+            if (isActualPrice(itemPriceEntity)) {
                 itemPriceService.create(itemPriceEntity);
             }
         } catch (NotFoundException e) {
             String breakSelector = itemEntity.getBreakSelector();
             if (breakSelector != null && breakSelector.length() > 0 && findItemPriceBreak(itemDocument, breakSelector)) {
-                logger.info(String.format("Item with id \"%s\" found break selector \"%s\"", itemEntity.getId(), breakSelector));
+                logger.info(String.format("Item with id \"%d\" found break selector \"%s\"", itemEntity.getId(), breakSelector));
                 return false;
             } else {
                 throw e;
@@ -96,7 +87,54 @@ public class PriceParserImpl implements PriceParser {
         return true;
     }
 
-    protected Document loadContent(URL url) throws IOException {
+    private boolean isActualPrice(ItemPriceEntity itemPriceEntity) {
+        List<ItemPriceEntity> itemPriceEntityList = itemPriceService.findLast(itemPriceEntity.getItem());
+        if (itemPriceEntityList.size() == 0) {
+            return true;
+        }
+        Float currentPrice = itemPriceEntity.getPrice();
+        Float prevPrice = itemPriceEntityList.get(0).getPrice();
+        if (!currentPrice.equals(prevPrice)) {
+            return true;
+        }
+        return false;
+    }
+
+    private String findDocumentPrice(Document document, String selectors) throws NotFoundException {
+        for (String selector : selectors.split("\\|")) {
+            try {
+                Element element = document.selectFirst(selector);
+                if (element == null) {
+                    throw new NotFoundException("Item price element not found");
+                }
+                String html = element.html();
+                String priceValue = html.replaceAll("[^0-9,.]", "").replace(",", ".");
+                logger.debug(String.format("Item price html \"%s\" and value \"%s\"", html, priceValue));
+                return priceValue;
+            } catch (NotFoundException e) {
+                logger.debug(String.format("Item price element not found by selector \"%s\"", selector));
+            }
+        }
+        throw new NotFoundException(String.format("Item price element not found by selectors \"%s\"", selectors));
+    }
+
+    private boolean findItemPriceBreak(Element item, String selector) {
+        Element element = item.selectFirst(selector);
+        return element != null;
+    }
+
+    private boolean isPriceReduced(List<ItemPriceEntity> itemPriceEntities) {
+        if (itemPriceEntities.size() > 1) {
+            Float currentPrice = itemPriceEntities.get(0).getPrice();
+            Float prevPrice = itemPriceEntities.get(1).getPrice();
+            if (currentPrice < prevPrice) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private Document loadContent(URL url) throws IOException {
         Connection connection = Jsoup
                 .connect(url.toString())
                 .header("Host", url.getHost())
@@ -118,70 +156,9 @@ public class PriceParserImpl implements PriceParser {
         throw new HttpStatusException("An error occurred during load page", statusCode, url.toString());
     }
 
-    private void notify(List<String> reducedPriceMessages, List<String> errorMessages) {
-        StringJoiner subject = new StringJoiner(", ");
-        StringJoiner body = new StringJoiner("\n\n");
-        subject.add(String.format("[Price tracker] Price reporting. Reduced %d", reducedPriceMessages.size()));
-        if (reducedPriceMessages.size() > 0) {
-            body.add(String.format("Reduced:\n\n%s", String.join("\n\n", reducedPriceMessages)));
-        }
-        if (errorMessages.size() > 0) {
-            subject.add(String.format("errors %d", errorMessages.size()));
-            body.add(String.format("Errors:\n\n%s", String.join("\n", errorMessages)));
-        }
-        mailService.sendAdmin(subject.toString(), body.toString());
-    }
-
-    private String findItemPrice(Document itemDocument, ItemEntity itemEntity) throws NotFoundException {
-        String itemEntitySelector = itemEntity.getSelector();
-        for (String selector : itemEntitySelector.split("\\|")) {
-            try {
-                return findItemPrice(itemDocument, selector);
-            } catch (NotFoundException e) {
-                logger.debug(String.format("Item price element not found by selector \"%s\"", selector));
-            }
-        }
-        throw new NotFoundException(String.format("Item price element not found by selectors \"%s\"", itemEntitySelector));
-    }
-
-    private String findItemPrice(Element item, String selector) throws NotFoundException {
-        Element element = item.selectFirst(selector);
-        if (element == null) {
-            throw new NotFoundException("Item price element not found");
-        }
-        String html = element.html();
-        Pattern pattern = Pattern.compile("^[0-9,.]+");
-        Matcher matcher = pattern.matcher(html);
-        if (matcher.find()) {
-            return html.substring(matcher.start(), matcher.end()).replace(",", ".");
-        }
-        throw new NotFoundException("Item price not found");
-    }
-
-    private boolean findItemPriceBreak(Element item, String selector) {
-        Element element = item.selectFirst(selector);
-        if (element == null) {
-            return false;
-        }
-        return true;
-    }
-
-    private boolean isPriceReduced(List<ItemPriceEntity> itemPriceEntities) {
-        if (itemPriceEntities.size() > 1) {
-            ItemPriceEntity itemPriceEntityCurrent = itemPriceEntities.get(0);
-            ItemPriceEntity itemPriceEntityPrev = itemPriceEntities.get(1);
-            if (itemPriceEntityCurrent.getPrice() < itemPriceEntityPrev.getPrice()) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     private final ItemService itemService;
 
     private final ItemPriceService itemPriceService;
-
-    private final MailService mailService;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
