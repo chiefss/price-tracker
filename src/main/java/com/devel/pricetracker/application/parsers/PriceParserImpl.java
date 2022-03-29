@@ -67,11 +67,11 @@ public class PriceParserImpl implements PriceParser {
         URL itemUrl = new URL(itemEntity.getUrl());
         Document itemDocument = loadContent(itemUrl);
         try {
-            String priceValue = findItemPrice(itemDocument, itemEntity.getSelector());
+            Float priceValue = findItemPrice(itemDocument, itemEntity.getSelector());
             ItemPriceEntity itemPriceEntity = new ItemPriceEntity();
             itemPriceEntity.setItem(itemEntity);
             itemPriceEntity.setDateFrom(LocalDateTime.now());
-            itemPriceEntity.setPrice(Float.valueOf(priceValue));
+            itemPriceEntity.setPrice(priceValue);
             if (isActualPrice(itemPriceEntity)) {
                 itemPriceService.create(itemPriceEntity);
             }
@@ -100,7 +100,7 @@ public class PriceParserImpl implements PriceParser {
         return false;
     }
 
-    private String findItemPrice(Document document, String selectors) throws NotFoundException {
+    private Float findItemPrice(Document document, String selectors) throws NotFoundException {
         for (String selector : selectors.split("\\|")) {
             try {
                 Element element = document.selectFirst(selector);
@@ -108,10 +108,10 @@ public class PriceParserImpl implements PriceParser {
                     throw new NotFoundException("Item price element not found");
                 }
                 String html = element.html();
-                String priceValue = html.replaceAll("[^0-9,.]", "").replace(",", ".");
-                logger.debug(String.format("Item price html \"%s\" and value \"%s\"", html, priceValue));
+                Float priceValue = CurrencyUtils.getCurrencySubstring(html);
+                logger.debug(String.format("Item price html \"%s\" and value \"%f\"", html, priceValue));
                 return priceValue;
-            } catch (NotFoundException e) {
+            } catch (NotFoundException | IOException e) {
                 logger.debug(String.format("Item price element not found by selector \"%s\"", selector));
             }
         }
