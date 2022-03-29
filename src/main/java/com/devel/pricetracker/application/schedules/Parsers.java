@@ -3,6 +3,7 @@ package com.devel.pricetracker.application.schedules;
 import com.devel.pricetracker.application.dto.PriceParserResultDto;
 import com.devel.pricetracker.application.parsers.PriceParser;
 import com.devel.pricetracker.application.services.MailService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -22,9 +23,11 @@ public class Parsers {
 
     @Scheduled(fixedDelay = 1000 * 60 * 60 * 3, initialDelay = 1000 * 60 * 60)
     public void parse() {
-        PriceParserResultDto priceParserResultDto = priceParser.parseAll();
-        if (priceParserResultDto.hasReduceMessages() || priceParserResultDto.hasErrorMessages()) {
-            notify(priceParserResultDto.getReduceMessages(), priceParserResultDto.getErrorMessages());
+        if (appParserCronEnabled) {
+            PriceParserResultDto priceParserResultDto = priceParser.parseAll();
+            if (priceParserResultDto.hasReduceMessages() || priceParserResultDto.hasErrorMessages()) {
+                notify(priceParserResultDto.getReduceMessages(), priceParserResultDto.getErrorMessages());
+            }
         }
     }
 
@@ -45,5 +48,8 @@ public class Parsers {
     private final PriceParser priceParser;
 
     private final MailService mailService;
+
+    @Value("${app.parser.cron.enabled}")
+    private boolean appParserCronEnabled;
 
 }
