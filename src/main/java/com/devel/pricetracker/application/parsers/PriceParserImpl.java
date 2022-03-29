@@ -67,7 +67,7 @@ public class PriceParserImpl implements PriceParser {
         URL itemUrl = new URL(itemEntity.getUrl());
         Document itemDocument = loadContent(itemUrl);
         try {
-            String priceValue = findDocumentPrice(itemDocument, itemEntity.getSelector());
+            String priceValue = findItemPrice(itemDocument, itemEntity.getSelector());
             ItemPriceEntity itemPriceEntity = new ItemPriceEntity();
             itemPriceEntity.setItem(itemEntity);
             itemPriceEntity.setDateFrom(LocalDateTime.now());
@@ -100,7 +100,7 @@ public class PriceParserImpl implements PriceParser {
         return false;
     }
 
-    private String findDocumentPrice(Document document, String selectors) throws NotFoundException {
+    private String findItemPrice(Document document, String selectors) throws NotFoundException {
         for (String selector : selectors.split("\\|")) {
             try {
                 Element element = document.selectFirst(selector);
