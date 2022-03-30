@@ -32,30 +32,21 @@ public class PriceParserImpl implements PriceParser {
         this.itemPriceService = itemPriceService;
     }
 
-    public PriceParserResultDto parseAll() {
+    public List<PriceParserResultDto> parseAll() {
         List<ItemEntity> itemEntities = itemService.findAll(true);
-        PriceParserResultDto priceParserResultDto = new PriceParserResultDto();
+        List<PriceParserResultDto> priceParserResultDtos = new ArrayList<>();
         for (ItemEntity itemEntity : itemEntities) {
             try {
                 Optional<ItemPriceEntity> itemPriceEntityOptional = parse(itemEntity);
                 if (itemPriceEntityOptional.isPresent()) {
                     itemPriceService.create(itemPriceEntityOptional.get());
-                    List<ItemPriceEntity> itemPriceEntities = itemPriceService.findLast(itemEntity);
-                    if (isPriceReduced(itemPriceEntities)) {
-                        Float itemPriceEntityCurrent = itemPriceEntities.get(0).getPrice();
-                        Float itemPriceEntityPrev = itemPriceEntities.get(1).getPrice();
-                        priceParserResultDto.addReduceMessage(String.format("\"%s\" with id \"%d\" change price to %s (-%s) url \"%s\"",
-                            itemEntity.getName(), itemEntity.getId(),
-                            CurrencyUtils.formatCurrency(itemPriceEntityCurrent),
-                            CurrencyUtils.formatCurrency(itemPriceEntityPrev - itemPriceEntityCurrent),
-                            itemEntity.getUrl()));
-                    }
+                    priceParserResultDtos.add(new PriceParserResultDto(itemEntity, true, null));
                 }
             } catch (NotFoundException | IOException e) {
-                priceParserResultDto.addErrorMessage(String.format("\"%s\" with id \"%d\", error: \"%s\"", itemEntity.getName(), itemEntity.getId(), e.getMessage()));
+                priceParserResultDtos.add(new PriceParserResultDto(itemEntity, false, e.getMessage()));
             }
         }
-        return priceParserResultDto;
+        return priceParserResultDtos;
     }
 
     public Optional<ItemPriceEntity> parse(ItemEntity itemEntity) throws IOException, NotFoundException {
@@ -121,17 +112,6 @@ public class PriceParserImpl implements PriceParser {
     private boolean findItemPriceBreak(Element item, String selector) {
         Element element = item.selectFirst(selector);
         return element != null;
-    }
-
-    private boolean isPriceReduced(List<ItemPriceEntity> itemPriceEntities) {
-        if (itemPriceEntities.size() > 1) {
-            Float currentPrice = itemPriceEntities.get(0).getPrice();
-            Float prevPrice = itemPriceEntities.get(1).getPrice();
-            if (currentPrice < prevPrice) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private Document loadContent(URL url) throws IOException {

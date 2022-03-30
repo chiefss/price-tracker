@@ -1,33 +1,19 @@
 package com.devel.pricetracker.application.dto;
 
+import com.devel.pricetracker.application.models.entities.ItemEntity;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.ArrayList;
-import java.util.List;
 
 @NoArgsConstructor
+@AllArgsConstructor
 @Getter
 @Setter
 public class PriceParserResultDto {
 
-    public void addReduceMessage(String reduceMessage) {
-        reduceMessages.add(reduceMessage);
-    }
-
-    public boolean hasReduceMessages() {
-        return reduceMessages.size() > 0;
-    }
-
-    public void addErrorMessage(String errorMessage) {
-        errorMessages.add(errorMessage);
-    }
-
-    public boolean hasErrorMessages() {
-        return errorMessages.size() > 0;
-    }
-
-    private List<String> reduceMessages = new ArrayList<>();
-    private List<String> errorMessages = new ArrayList<>();
+    private ItemEntity item;
+    private boolean success;
+    private String message;
 }
