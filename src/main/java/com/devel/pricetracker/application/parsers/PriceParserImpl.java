@@ -27,6 +27,8 @@ import java.util.concurrent.ThreadLocalRandom;
 @Component
 public class PriceParserImpl implements PriceParser {
 
+    public static final String SELECTOR_SPLIT_DELIMITER = "\\|";
+
     public PriceParserImpl(ItemService itemService, ItemPriceService itemPriceService) {
         this.itemService = itemService;
         this.itemPriceService = itemPriceService;
@@ -92,7 +94,7 @@ public class PriceParserImpl implements PriceParser {
     }
 
     private Float findItemPrice(Document document, String selectors) throws NotFoundException {
-        for (String selector : selectors.split("\\|")) {
+        for (String selector : selectors.split(SELECTOR_SPLIT_DELIMITER)) {
             try {
                 Element element = document.selectFirst(selector);
                 if (element == null) {
@@ -124,7 +126,6 @@ public class PriceParserImpl implements PriceParser {
                 .header("Accept-Encoding", "gzip, deflate")
                 .header("DNT", "1")
                 .header("Connection", "keep-alive")
-                .header("Cookie", "modtids=; modpids=; modtids=; modpids=; __cfduid=1; deskver=1; c-1=; c-1=; c-1=; c-1=")
                 .header("Upgrade-Insecure-Requests", "1")
                 .header("Pragma", "no-cache")
                 .header("Cache-Control", "no-cache");
