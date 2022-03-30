@@ -77,7 +77,10 @@ public class IndexWebController {
         ItemEntity createdItemEntity = itemService.create(itemEntity);
         try {
             if (createdItemEntity != null && parseNow.isPresent() && parseNow.get()) {
-                priceParser.parse(createdItemEntity);
+                Optional<ItemPriceEntity> itemPriceEntityOptional = priceParser.parse(createdItemEntity);
+                if (itemPriceEntityOptional.isPresent()) {
+                    itemPriceService.create(itemPriceEntityOptional.get());
+                }
             }
         } catch (NotFoundException | IOException e) {
             logger.error(String.format("An error occurred during parse price %s: %s", createdItemEntity.getUrl(), e.getMessage()));
@@ -99,7 +102,10 @@ public class IndexWebController {
             ItemEntity updatedItemEntity = itemService.update(itemEntity);
             try {
                 if (parseNow.isPresent() && parseNow.get()) {
-                    priceParser.parse(updatedItemEntity);
+                    Optional<ItemPriceEntity> itemPriceEntityOptional = priceParser.parse(updatedItemEntity);
+                    if (itemPriceEntityOptional.isPresent()) {
+                        itemPriceService.create(itemPriceEntityOptional.get());
+                    }
                 }
             } catch(HttpStatusException e) {
                 logger.error(e.getMessage());

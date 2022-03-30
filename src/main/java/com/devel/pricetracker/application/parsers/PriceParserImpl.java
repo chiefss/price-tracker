@@ -37,8 +37,9 @@ public class PriceParserImpl implements PriceParser {
         PriceParserResultDto priceParserResultDto = new PriceParserResultDto();
         for (ItemEntity itemEntity : itemEntities) {
             try {
-                boolean parsed = parse(itemEntity);
-                if (parsed) {
+                Optional<ItemPriceEntity> itemPriceEntityOptional = parse(itemEntity);
+                if (itemPriceEntityOptional.isPresent()) {
+                    itemPriceService.create(itemPriceEntityOptional.get());
                     List<ItemPriceEntity> itemPriceEntities = itemPriceService.findLast(itemEntity);
                     if (isPriceReduced(itemPriceEntities)) {
                         Float itemPriceEntityCurrent = itemPriceEntities.get(0).getPrice();
@@ -57,7 +58,7 @@ public class PriceParserImpl implements PriceParser {
         return priceParserResultDto;
     }
 
-    public boolean parse(ItemEntity itemEntity) throws IOException, NotFoundException {
+    public Optional<ItemPriceEntity> parse(ItemEntity itemEntity) throws IOException, NotFoundException {
         try {
             int sleepTime = ThreadLocalRandom.current().nextInt(Constants.PARSER_THREAD_SLEEP_MIN_SECOND, Constants.PARSER_THREAD_SLEEP_MAX_SECOND + 1) * 1000;
             Thread.sleep(sleepTime);
@@ -73,18 +74,17 @@ public class PriceParserImpl implements PriceParser {
             itemPriceEntity.setDateFrom(LocalDateTime.now());
             itemPriceEntity.setPrice(priceValue);
             if (isActualPrice(itemPriceEntity)) {
-                itemPriceService.create(itemPriceEntity);
+                return Optional.of(itemPriceEntity);
             }
         } catch (NotFoundException e) {
             String breakSelector = itemEntity.getBreakSelector();
             if (breakSelector != null && breakSelector.length() > 0 && findItemPriceBreak(itemDocument, breakSelector)) {
                 logger.info(String.format("Item with id \"%d\" found break selector \"%s\"", itemEntity.getId(), breakSelector));
-                return false;
             } else {
                 throw e;
             }
         }
-        return true;
+        return Optional.empty();
     }
 
     private boolean isActualPrice(ItemPriceEntity itemPriceEntity) {
