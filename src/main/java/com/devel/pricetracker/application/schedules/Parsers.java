@@ -21,7 +21,7 @@ public class Parsers {
         this.mailService = mailService;
     }
 
-    @Scheduled(fixedDelayString = "${app.parser.cron.fixed-delay}", initialDelayString = "${app.parser.cron.initial-delay}")
+    @Scheduled(fixedRateString = "${app.parser.cron.interval}", initialDelayString = "${app.parser.cron.initial-timeout}")
     public void parse() {
         if (appParserCronEnabled) {
             PriceParserResultDto priceParserResultDto = priceParser.parseAll();
