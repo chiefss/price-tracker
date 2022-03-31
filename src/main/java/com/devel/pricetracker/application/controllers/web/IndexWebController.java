@@ -108,32 +108,20 @@ public class IndexWebController {
     }
 
     @PostMapping("/delete/{id}")
-    public String deleteAction(@PathVariable Long id) {
-        try {
-            itemService.delete(id);
-        } catch (NotFoundException e) {
-            logger.warn(String.format("An error occurred during delete item with id \"%d\"", id));
-        }
+    public String deleteAction(@PathVariable Long id) throws NotFoundException {
+        itemService.delete(id);
         return "redirect:/";
     }
 
     @PostMapping("/activate/{id}")
-    public String activateAction(@PathVariable Long id) {
-        try {
-            itemService.activate(id);
-        } catch (NotFoundException e) {
-            logger.warn(String.format("An error occurred during activate item with id \"%d\"", id));
-        }
+    public String activateAction(@PathVariable Long id) throws NotFoundException {
+        itemService.activate(id);
         return "redirect:/";
     }
 
     @PostMapping("/deactivate/{id}")
-    public String deactivateAction(@PathVariable Long id) {
-        try {
-            itemService.deactivate(id);
-        } catch (NotFoundException e) {
-            logger.warn(String.format("An error occurred during deactivate item with id \"%d\"", id));
-        }
+    public String deactivateAction(@PathVariable Long id) throws NotFoundException {
+        itemService.deactivate(id);
         return "redirect:/";
     }
 
@@ -145,7 +133,7 @@ public class IndexWebController {
     }
 
     @GetMapping("/prices/cleanall")
-    public String cleanAllAction() throws NotFoundException {
+    public String cleanAllAction() {
         List<ItemEntity> itemEntities = itemService.findAll(false);
         for (ItemEntity itemEntity : itemEntities) {
             cleanPriceDuplicates(itemEntity);

@@ -73,41 +73,26 @@ public class ItemServiceImpl implements ItemService {
     @Override
     @Transactional
     public Long delete(Long itemId) throws NotFoundException {
-        try {
-            ItemEntity itemEntity = find(itemId);
-            itemPriceService.deleteAll(itemEntity);
-            itemRepository.delete(itemEntity);
-            return itemId;
-        } catch (NotFoundException e) {
-            logger.error(String.format("An error occurred during delete Item with id: %d", itemId));
-            throw new NotFoundException(String.format("An error occurred during delete Item with id: %d", itemId), e);
-        }
+        ItemEntity itemEntity = find(itemId);
+        itemPriceService.deleteAll(itemEntity);
+        itemRepository.delete(itemEntity);
+        return itemId;
     }
 
     @Override
     public Long activate(Long itemId) throws NotFoundException {
-        try {
-            ItemEntity itemEntity = find(itemId);
-            itemEntity.setDateTo(null);
-            itemRepository.save(itemEntity);
-            return itemId;
-        } catch (NotFoundException e) {
-            logger.error(String.format("An error occurred during activate Item with id: %d", itemId));
-            throw new NotFoundException(String.format("An error occurred during activate Item with id: %d", itemId), e);
-        }
+        ItemEntity itemEntity = find(itemId);
+        itemEntity.setDateTo(null);
+        itemRepository.save(itemEntity);
+        return itemId;
     }
 
     @Override
     public Long deactivate(Long itemId) throws NotFoundException {
-        try {
-            ItemEntity itemEntity = find(itemId);
-            itemEntity.setDateTo(LocalDateTime.now());
-            itemRepository.save(itemEntity);
-            return itemId;
-        } catch (NotFoundException e) {
-            logger.error(String.format("An error occurred during deactivate Item with id: %d", itemId));
-            throw new NotFoundException(String.format("An error occurred during deactivate Item with id: %d", itemId), e);
-        }
+        ItemEntity itemEntity = find(itemId);
+        itemEntity.setDateTo(LocalDateTime.now());
+        itemRepository.save(itemEntity);
+        return itemId;
     }
 
     private final ItemRepository itemRepository;
