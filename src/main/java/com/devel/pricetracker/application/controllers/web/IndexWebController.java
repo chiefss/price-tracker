@@ -62,26 +62,19 @@ public class IndexWebController {
     @PostMapping("/create")
     public String createAction(@RequestParam String name, @RequestParam String url,
                                @RequestParam String selector, @RequestParam(value = "break_selector") String breakSelector,
-                               @RequestParam(name = "parse_now") Optional<Boolean> parseNow) {
+                               @RequestParam(name = "parse_now", required = false) boolean parseNow) {
         ItemDto itemDto = new ItemDto();
         itemDto.setName(name);
         itemDto.setUrl(url);
         itemDto.setSelector(selector);
         itemDto.setBreakSelector(breakSelector);
         ItemEntity createdItemEntity = itemService.create(itemDto);
-        try {
-            if (createdItemEntity != null && parseNow.isPresent() && parseNow.get()) {
-                Optional<ItemPriceEntity> itemPriceEntityOptional = priceParser.parse(createdItemEntity);
-                if (itemPriceEntityOptional.isPresent()) {
-                    ItemPriceEntity itemPriceEntity = itemPriceEntityOptional.get();
-                    ItemPriceDto itemPriceDto = new ItemPriceDto();
-                    itemPriceDto.setItemId(itemPriceEntity.getId());
-                    itemPriceDto.setPrice(itemPriceEntity.getPrice());
-                    itemPriceService.create(itemPriceDto);
-                }
+        if (createdItemEntity != null && parseNow) {
+            try {
+                createItemPrice(createdItemEntity);
+            } catch (NotFoundException | IOException e) {
+                logger.error(String.format("An error occurred during parse price %s: %s", createdItemEntity.getUrl(), e.getMessage()));
             }
-        } catch (NotFoundException | IOException e) {
-            logger.error(String.format("An error occurred during parse price %s: %s", createdItemEntity.getUrl(), e.getMessage()));
         }
         return "redirect:/";
     }
@@ -89,7 +82,7 @@ public class IndexWebController {
     @PostMapping("/update")
     public String updateAction(@RequestParam Long id, @RequestParam String name, @RequestParam String url,
                                @RequestParam String selector, @RequestParam(value = "break_selector") String breakSelector,
-                               @RequestParam(name = "parse_now") Optional<Boolean> parseNow) throws NotFoundException {
+                               @RequestParam(name = "parse_now", required = false) boolean parseNow) throws NotFoundException {
         ItemDto itemDto = new ItemDto();
         itemDto.setId(id);
         itemDto.setName(name);
@@ -97,21 +90,14 @@ public class IndexWebController {
         itemDto.setSelector(selector);
         itemDto.setBreakSelector(breakSelector);
         ItemEntity updatedItemEntity = itemService.update(itemDto);
-        try {
-            if (parseNow.isPresent() && parseNow.get()) {
-                Optional<ItemPriceEntity> itemPriceEntityOptional = priceParser.parse(updatedItemEntity);
-                if (itemPriceEntityOptional.isPresent()) {
-                    ItemPriceEntity itemPriceEntity = itemPriceEntityOptional.get();
-                    ItemPriceDto itemPriceDto = new ItemPriceDto();
-                    itemPriceDto.setItemId(itemPriceEntity.getId());
-                    itemPriceDto.setPrice(itemPriceEntity.getPrice());
-                    itemPriceService.create(itemPriceDto);
-                }
+        if (parseNow) {
+            try {
+                createItemPrice(updatedItemEntity);
+            } catch(HttpStatusException e) {
+                logger.error(e.getMessage());
+            } catch (NotFoundException | IOException e) {
+                logger.error(String.format("An error occurred during parse price %s: %s", updatedItemEntity.getUrl(), e.getMessage()));
             }
-        } catch(HttpStatusException e) {
-            logger.error(e.getMessage());
-        } catch (NotFoundException | IOException e) {
-            logger.error(String.format("An error occurred during parse price %s: %s", updatedItemEntity.getUrl(), e.getMessage()));
         }
         return String.format("redirect:/view/%d", itemDto.getId());
     }
@@ -160,6 +146,17 @@ public class IndexWebController {
     @ResponseBody
     public void returnNoFavicon() {
 
+    }
+
+    private void createItemPrice(ItemEntity createdItemEntity) throws IOException, NotFoundException {
+        Optional<ItemPriceEntity> itemPriceEntityOptional = priceParser.parse(createdItemEntity);
+        if (itemPriceEntityOptional.isPresent()) {
+            ItemPriceEntity itemPriceEntity = itemPriceEntityOptional.get();
+            ItemPriceDto itemPriceDto = new ItemPriceDto();
+            itemPriceDto.setItemId(itemPriceEntity.getId());
+            itemPriceDto.setPrice(itemPriceEntity.getPrice());
+            itemPriceService.create(itemPriceDto);
+        }
     }
 
     private void cleanPriceDuplicates(ItemEntity itemEntity) {
