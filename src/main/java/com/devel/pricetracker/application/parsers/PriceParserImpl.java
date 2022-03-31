@@ -21,7 +21,7 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.net.URL;
 import java.util.*;
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.*;
 
 
 @Component
@@ -37,20 +37,42 @@ public class PriceParserImpl implements PriceParser {
     public List<PriceParserResultDto> parseAll() {
         List<ItemEntity> itemEntities = itemService.findAll(true);
         List<PriceParserResultDto> priceParserResultDtos = new ArrayList<>();
+        ExecutorService pool = Executors.newFixedThreadPool(Constants.PARSER_MAX_THREADS);
+        List<Callable<Optional<PriceParserResultDto>>> tasks = new ArrayList<>();
         for (ItemEntity itemEntity : itemEntities) {
-            try {
-                Optional<ItemPriceEntity> itemPriceEntityOptional = parse(itemEntity);
-                if (itemPriceEntityOptional.isPresent()) {
-                    ItemPriceEntity itemPriceEntity = itemPriceEntityOptional.get();
-                    ItemPriceDto itemPriceDto = new ItemPriceDto();
-                    itemPriceDto.setItemId(itemPriceEntity.getItem().getId());
-                    itemPriceDto.setPrice(itemPriceEntity.getPrice());
-                    itemPriceService.create(itemPriceDto);
-                    priceParserResultDtos.add(new PriceParserResultDto(itemEntity, true, null));
+            Callable callable = new Callable() {
+                @Override
+                public Optional<PriceParserResultDto> call()  {
+                    try {
+                        Optional<ItemPriceEntity> itemPriceEntityOptional = parse(itemEntity);
+                        if (itemPriceEntityOptional.isPresent()) {
+                            ItemPriceEntity itemPriceEntity = itemPriceEntityOptional.get();
+                            ItemPriceDto itemPriceDto = new ItemPriceDto();
+                            itemPriceDto.setItemId(itemPriceEntity.getItem().getId());
+                            itemPriceDto.setPrice(itemPriceEntity.getPrice());
+                            itemPriceService.create(itemPriceDto);
+                            return Optional.of(new PriceParserResultDto(itemEntity, true, null));
+                        }
+                    } catch (NotFoundException | IOException e) {
+                        return Optional.of(new PriceParserResultDto(itemEntity, false, e.getMessage()));
+                    }
+                    return Optional.empty();
                 }
-            } catch (NotFoundException | IOException e) {
-                priceParserResultDtos.add(new PriceParserResultDto(itemEntity, false, e.getMessage()));
+            };
+            tasks.add(callable);
+        }
+        try {
+            List<Future<Optional<PriceParserResultDto>>> futures = pool.invokeAll(tasks);
+            for (Future<Optional<PriceParserResultDto>> future : futures) {
+                Optional<PriceParserResultDto> priceParserResultDtoOptional = future.get();
+                if (priceParserResultDtoOptional.isPresent()) {
+                    priceParserResultDtos.add(priceParserResultDtoOptional.get());
+                }
             }
+        } catch (InterruptedException | ExecutionException e) {
+            logger.error(String.format("An error occurred during parse all items: \"%s\"", e.getMessage()));
+        } finally {
+            pool.shutdown();
         }
         return priceParserResultDtos;
     }
@@ -150,5 +172,4 @@ public class PriceParserImpl implements PriceParser {
     private final ItemPriceService itemPriceService;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
-
 }

@@ -6,6 +6,8 @@ import com.devel.pricetracker.application.models.entities.ItemPriceEntity;
 import com.devel.pricetracker.application.services.ItemPriceService;
 import com.devel.pricetracker.application.services.MailService;
 import com.devel.pricetracker.application.utils.CurrencyUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -107,4 +109,5 @@ public class PriceParser {
     @Value("${app.parser.cron.enabled}")
     private boolean appParserCronEnabled;
 
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 }
