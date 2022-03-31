@@ -44,16 +44,9 @@ public class IndexWebController {
     }
 
     @GetMapping("/view/{id}")
-    public String detailAction(Model model, @PathVariable Long id) {
-        ItemEntity itemEntity;
-        ItemDtoView itemDtoView;
-        try {
-            itemEntity = itemService.find(id);
-        } catch (NotFoundException e) {
-            logger.warn(String.format("An error occurred during find item with id \"%d\"", id));
-            return "redirect:/";
-        }
-        itemDtoView = getItemDto(itemEntity);
+    public String detailAction(Model model, @PathVariable Long id) throws NotFoundException {
+        ItemEntity itemEntity = itemService.find(id);
+        ItemDtoView itemDtoView = getItemDto(itemEntity);
         List<ItemPriceDtoView> itemPriceDtoViews = itemPriceService.findAll(itemEntity).stream().limit(DETAIL_PRICES_LIMIT)
                 .map(itemPriceEntity -> ItemPriceDtoViewFactory.create(itemPriceEntity)).collect(Collectors.toList());
         itemPriceDtoViews.forEach(itemPriceDto -> itemPriceDto.setFormatedPrice(CurrencyUtils.formatCurrency(itemPriceDto.getPrice())));
@@ -91,29 +84,25 @@ public class IndexWebController {
     @PostMapping("/update")
     public String updateAction(@RequestParam Long id, @RequestParam String name, @RequestParam String url,
                                @RequestParam String selector, @RequestParam(value = "break_selector") String breakSelector,
-                               @RequestParam(name = "parse_now") Optional<Boolean> parseNow) {
+                               @RequestParam(name = "parse_now") Optional<Boolean> parseNow) throws NotFoundException {
         ItemEntity itemEntity = new ItemEntity();
         itemEntity.setId(id);
         itemEntity.setName(name);
         itemEntity.setUrl(url);
         itemEntity.setSelector(selector);
         itemEntity.setBreakSelector(breakSelector);
+        ItemEntity updatedItemEntity = itemService.update(itemEntity);
         try {
-            ItemEntity updatedItemEntity = itemService.update(itemEntity);
-            try {
-                if (parseNow.isPresent() && parseNow.get()) {
-                    Optional<ItemPriceEntity> itemPriceEntityOptional = priceParser.parse(updatedItemEntity);
-                    if (itemPriceEntityOptional.isPresent()) {
-                        itemPriceService.create(itemPriceEntityOptional.get());
-                    }
+            if (parseNow.isPresent() && parseNow.get()) {
+                Optional<ItemPriceEntity> itemPriceEntityOptional = priceParser.parse(updatedItemEntity);
+                if (itemPriceEntityOptional.isPresent()) {
+                    itemPriceService.create(itemPriceEntityOptional.get());
                 }
-            } catch(HttpStatusException e) {
-                logger.error(e.getMessage());
-            } catch (NotFoundException | IOException e) {
-                logger.error(String.format("An error occurred during parse price %s: %s", updatedItemEntity.getUrl(), e.getMessage()));
             }
-        } catch (NotFoundException e) {
+        } catch(HttpStatusException e) {
             logger.error(e.getMessage());
+        } catch (NotFoundException | IOException e) {
+            logger.error(String.format("An error occurred during parse price %s: %s", updatedItemEntity.getUrl(), e.getMessage()));
         }
         return String.format("redirect:/view/%d", itemEntity.getId());
     }
