@@ -1,6 +1,7 @@
 package com.devel.pricetracker.services;
 
 
+import com.devel.pricetracker.application.dto.ItemPriceDto;
 import com.devel.pricetracker.application.models.entities.ItemEntity;
 import com.devel.pricetracker.application.models.entities.ItemPriceEntity;
 import com.devel.pricetracker.application.models.repository.ItemPriceRepository;
@@ -46,12 +47,10 @@ public class TestItemPriceService {
     }
 
     @Test
-    public void testCreate() {
+    public void testCreate() throws NotFoundException {
         Long expectedId = 18L;
-        ItemEntity itemEnity = new ItemEntity();
-        itemEnity.setId(1L);
-        ItemPriceEntity itemPriceEntity = new ItemPriceEntity(1000L, itemEnity, (float) 222.3, LocalDateTime.now());
-        ItemPriceEntity newItemPriceEntity = itemPriceService.create(itemPriceEntity);
+        ItemPriceDto itemPriceDto = new ItemPriceDto(1000L, 1L, (float) 222.3, LocalDateTime.now());
+        ItemPriceEntity newItemPriceEntity = itemPriceService.create(itemPriceDto);
         Assertions.assertEquals(expectedId, newItemPriceEntity.getId());
         Optional<ItemPriceEntity> itemPriceEntityOptional = itemPriceRepository.findById(expectedId);
         Assertions.assertTrue(itemPriceEntityOptional.isPresent());
@@ -63,8 +62,7 @@ public class TestItemPriceService {
         long countAll = itemPriceRepository.count();
         ItemEntity itemEntity = new ItemEntity();
         itemEntity.setId(expectedId);
-        Long result = itemPriceService.deleteAll(itemEntity);
-        Assertions.assertEquals(1L, result);
+        itemPriceService.deleteAll(itemEntity);
         Optional<ItemPriceEntity> itemPriceEntity = itemPriceRepository.findById(6L);
         Assertions.assertTrue(itemPriceEntity.isEmpty());
         long newCountAll = itemPriceRepository.count();

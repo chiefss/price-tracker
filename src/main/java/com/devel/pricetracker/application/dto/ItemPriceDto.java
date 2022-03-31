@@ -12,13 +12,15 @@ import java.time.LocalDateTime;
 @Setter
 public class ItemPriceDto {
 
-    public ItemPriceDto(Long id, Float price, LocalDateTime dateFrom) {
+    public ItemPriceDto(Long id, Long itemId, Float price, LocalDateTime dateFrom) {
         this.id = id;
+        this.itemId = itemId;
         this.price = price;
         this.dateFrom = dateFrom;
     }
 
     private Long id;
+    private Long itemId;
     private Float price;
     private String formatedPrice;
     private LocalDateTime dateFrom;

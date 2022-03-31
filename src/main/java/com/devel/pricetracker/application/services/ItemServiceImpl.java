@@ -2,6 +2,7 @@ package com.devel.pricetracker.application.services;
 
 import com.devel.pricetracker.application.dto.ItemDto;
 import com.devel.pricetracker.application.models.entities.ItemEntity;
+import com.devel.pricetracker.application.models.repository.ItemPriceRepository;
 import com.devel.pricetracker.application.models.repository.ItemRepository;
 import javassist.NotFoundException;
 import org.slf4j.Logger;
@@ -21,9 +22,9 @@ import java.util.stream.Collectors;
 public class ItemServiceImpl implements ItemService {
 
     @Autowired
-    public ItemServiceImpl(ItemRepository itemRepository, ItemPriceService itemPriceService) {
+    public ItemServiceImpl(ItemRepository itemRepository, ItemPriceRepository itemPriceRepository) {
         this.itemRepository = itemRepository;
-        this.itemPriceService = itemPriceService;
+        this.itemPriceRepository = itemPriceRepository;
     }
 
     @Override
@@ -79,32 +80,29 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     @Transactional
-    public Long delete(Long itemId) throws NotFoundException {
+    public void delete(Long itemId) throws NotFoundException {
         ItemEntity itemEntity = find(itemId);
-        itemPriceService.deleteAll(itemEntity);
+        itemPriceRepository.deleteAllByItemId(itemEntity.getId());
         itemRepository.delete(itemEntity);
-        return itemId;
     }
 
     @Override
-    public Long activate(Long itemId) throws NotFoundException {
+    public void activate(Long itemId) throws NotFoundException {
         ItemEntity itemEntity = find(itemId);
         itemEntity.setDateTo(null);
         itemRepository.save(itemEntity);
-        return itemId;
     }
 
     @Override
-    public Long deactivate(Long itemId) throws NotFoundException {
+    public void deactivate(Long itemId) throws NotFoundException {
         ItemEntity itemEntity = find(itemId);
         itemEntity.setDateTo(LocalDateTime.now());
         itemRepository.save(itemEntity);
-        return itemId;
     }
 
     private final ItemRepository itemRepository;
 
-    private final ItemPriceService itemPriceService;
+    private final ItemPriceRepository itemPriceRepository;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 }

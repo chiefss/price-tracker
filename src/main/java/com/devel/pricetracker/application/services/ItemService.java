@@ -11,7 +11,7 @@ public interface ItemService {
     public ItemEntity find(Long itemId) throws NotFoundException;
     public ItemEntity create(ItemDto itemEntity);
     public ItemEntity update(ItemDto itemEntity) throws NotFoundException;
-    public Long delete(Long itemId) throws NotFoundException;
-    public Long activate(Long itemId) throws NotFoundException;
-    public Long deactivate(Long itemId) throws NotFoundException;
+    public void delete(Long itemId) throws NotFoundException;
+    public void activate(Long itemId) throws NotFoundException;
+    public void deactivate(Long itemId) throws NotFoundException;
 }

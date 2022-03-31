@@ -1,12 +1,16 @@
 package com.devel.pricetracker.application.services;
 
+import com.devel.pricetracker.application.dto.ItemPriceDto;
 import com.devel.pricetracker.application.models.entities.ItemEntity;
 import com.devel.pricetracker.application.models.entities.ItemPriceEntity;
 import com.devel.pricetracker.application.models.repository.ItemPriceRepository;
+import com.devel.pricetracker.application.models.repository.ItemRepository;
+import javassist.NotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,8 +18,9 @@ import java.util.List;
 public class ItemPriceServiceImpl implements ItemPriceService {
 
     @Autowired
-    public ItemPriceServiceImpl(ItemPriceRepository itemPriceRepository) {
+    public ItemPriceServiceImpl(ItemPriceRepository itemPriceRepository, ItemRepository itemRepository) {
         this.itemPriceRepository = itemPriceRepository;
+        this.itemRepository = itemRepository;
     }
 
     @Override
@@ -38,23 +43,29 @@ public class ItemPriceServiceImpl implements ItemPriceService {
     }
 
     @Override
-    public ItemPriceEntity create(ItemPriceEntity itemPriceEntity) {
+    public ItemPriceEntity create(ItemPriceDto itemPriceDto) throws NotFoundException {
+        Long itemId = itemPriceDto.getItemId();
+        ItemEntity itemEntity = itemRepository.findById(itemId).orElseThrow(() -> new NotFoundException(String.format("An error occurred during create Item price and find Item with id: %d", itemId)));
+        ItemPriceEntity itemPriceEntity = new ItemPriceEntity();
         itemPriceEntity.setId(null);
+        itemPriceEntity.setItem(itemEntity);
+        itemPriceEntity.setPrice(itemPriceDto.getPrice());
+        itemPriceEntity.setDateFrom(LocalDateTime.now());
         ItemPriceEntity newEntity = itemPriceRepository.save(itemPriceEntity);
         return newEntity;
     }
 
-    public Long delete(ItemPriceEntity itemPriceEntity) {
-        itemPriceRepository.delete(itemPriceEntity);
-        return 1L;
+    public void delete(Long id) {
+        itemPriceRepository.deleteById(id);
     }
 
     @Override
     @Transactional
-    public Long deleteAll(ItemEntity itemEntity) {
+    public void deleteAll(ItemEntity itemEntity) {
         itemPriceRepository.deleteAllByItemId(itemEntity.getId());
-        return 1L;
     }
 
     private final ItemPriceRepository itemPriceRepository;
+
+    private final ItemRepository itemRepository;
 }

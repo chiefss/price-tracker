@@ -1,5 +1,6 @@
 package com.devel.pricetracker.application.parsers;
 
+import com.devel.pricetracker.application.dto.ItemPriceDto;
 import com.devel.pricetracker.application.dto.PriceParserResultDto;
 import com.devel.pricetracker.application.models.entities.ItemEntity;
 import com.devel.pricetracker.application.models.entities.ItemPriceEntity;
@@ -19,7 +20,6 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.net.URL;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -41,7 +41,11 @@ public class PriceParserImpl implements PriceParser {
             try {
                 Optional<ItemPriceEntity> itemPriceEntityOptional = parse(itemEntity);
                 if (itemPriceEntityOptional.isPresent()) {
-                    itemPriceService.create(itemPriceEntityOptional.get());
+                    ItemPriceEntity itemPriceEntity = itemPriceEntityOptional.get();
+                    ItemPriceDto itemPriceDto = new ItemPriceDto();
+                    itemPriceDto.setItemId(itemPriceEntity.getId());
+                    itemPriceDto.setPrice(itemPriceEntity.getPrice());
+                    itemPriceService.create(itemPriceDto);
                     priceParserResultDtos.add(new PriceParserResultDto(itemEntity, true, null));
                 }
             } catch (NotFoundException | IOException e) {
@@ -62,10 +66,7 @@ public class PriceParserImpl implements PriceParser {
         Document itemDocument = loadContent(itemUrl);
         try {
             Float priceValue = findItemPrice(itemDocument, itemEntity.getSelector());
-            ItemPriceEntity itemPriceEntity = new ItemPriceEntity();
-            itemPriceEntity.setItem(itemEntity);
-            itemPriceEntity.setDateFrom(LocalDateTime.now());
-            itemPriceEntity.setPrice(priceValue);
+            ItemPriceEntity itemPriceEntity = buildParsedItemPriceEntity(itemEntity, priceValue);
             if (isActualPrice(itemPriceEntity)) {
                 return Optional.of(itemPriceEntity);
             }
@@ -78,6 +79,13 @@ public class PriceParserImpl implements PriceParser {
             }
         }
         return Optional.empty();
+    }
+
+    private ItemPriceEntity buildParsedItemPriceEntity(ItemEntity itemEntity, Float priceValue) {
+        ItemPriceEntity itemPriceEntity = new ItemPriceEntity();
+        itemPriceEntity.setItem(itemEntity);
+        itemPriceEntity.setPrice(priceValue);
+        return itemPriceEntity;
     }
 
     private boolean isActualPrice(ItemPriceEntity itemPriceEntity) {

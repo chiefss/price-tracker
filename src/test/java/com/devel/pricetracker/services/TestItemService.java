@@ -87,8 +87,7 @@ public class TestItemService {
     @Test
     public void testDelete() throws NotFoundException {
         Long expectedId = 3L;
-        Long itemId = itemService.delete(expectedId);
-        Assertions.assertEquals(expectedId, itemId);
+        itemService.delete(expectedId);
         Optional<ItemEntity> itemEntity = itemRepository.findById(expectedId);
         Assertions.assertTrue(itemEntity.isEmpty());
     }

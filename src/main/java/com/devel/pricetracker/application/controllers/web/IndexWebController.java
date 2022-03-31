@@ -2,6 +2,7 @@ package com.devel.pricetracker.application.controllers.web;
 
 import com.devel.pricetracker.application.dto.ItemDto;
 import com.devel.pricetracker.application.dto.ItemDtoView;
+import com.devel.pricetracker.application.dto.ItemPriceDto;
 import com.devel.pricetracker.application.dto.ItemPriceDtoView;
 import com.devel.pricetracker.application.factory.ItemDtoViewFactory;
 import com.devel.pricetracker.application.factory.ItemPriceDtoViewFactory;
@@ -72,7 +73,11 @@ public class IndexWebController {
             if (createdItemEntity != null && parseNow.isPresent() && parseNow.get()) {
                 Optional<ItemPriceEntity> itemPriceEntityOptional = priceParser.parse(createdItemEntity);
                 if (itemPriceEntityOptional.isPresent()) {
-                    itemPriceService.create(itemPriceEntityOptional.get());
+                    ItemPriceEntity itemPriceEntity = itemPriceEntityOptional.get();
+                    ItemPriceDto itemPriceDto = new ItemPriceDto();
+                    itemPriceDto.setItemId(itemPriceEntity.getId());
+                    itemPriceDto.setPrice(itemPriceEntity.getPrice());
+                    itemPriceService.create(itemPriceDto);
                 }
             }
         } catch (NotFoundException | IOException e) {
@@ -96,7 +101,11 @@ public class IndexWebController {
             if (parseNow.isPresent() && parseNow.get()) {
                 Optional<ItemPriceEntity> itemPriceEntityOptional = priceParser.parse(updatedItemEntity);
                 if (itemPriceEntityOptional.isPresent()) {
-                    itemPriceService.create(itemPriceEntityOptional.get());
+                    ItemPriceEntity itemPriceEntity = itemPriceEntityOptional.get();
+                    ItemPriceDto itemPriceDto = new ItemPriceDto();
+                    itemPriceDto.setItemId(itemPriceEntity.getId());
+                    itemPriceDto.setPrice(itemPriceEntity.getPrice());
+                    itemPriceService.create(itemPriceDto);
                 }
             }
         } catch(HttpStatusException e) {
@@ -159,7 +168,7 @@ public class IndexWebController {
         for (ItemPriceEntity itemPriceEntity : itemPriceEntities) {
             Float currentValue = itemPriceEntity.getPrice();
             if (currentValue.equals(prevValue)) {
-                itemPriceService.delete(itemPriceEntity);
+                itemPriceService.delete(itemPriceEntity.getId());
             }
             prevValue = currentValue;
         }
