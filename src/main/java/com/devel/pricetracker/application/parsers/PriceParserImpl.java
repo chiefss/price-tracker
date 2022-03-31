@@ -43,7 +43,7 @@ public class PriceParserImpl implements PriceParser {
                 if (itemPriceEntityOptional.isPresent()) {
                     ItemPriceEntity itemPriceEntity = itemPriceEntityOptional.get();
                     ItemPriceDto itemPriceDto = new ItemPriceDto();
-                    itemPriceDto.setItemId(itemPriceEntity.getId());
+                    itemPriceDto.setItemId(itemPriceEntity.getItem().getId());
                     itemPriceDto.setPrice(itemPriceEntity.getPrice());
                     itemPriceService.create(itemPriceDto);
                     priceParserResultDtos.add(new PriceParserResultDto(itemEntity, true, null));
