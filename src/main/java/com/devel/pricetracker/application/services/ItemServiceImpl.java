@@ -1,5 +1,6 @@
 package com.devel.pricetracker.application.services;
 
+import com.devel.pricetracker.application.dto.ItemDto;
 import com.devel.pricetracker.application.models.entities.ItemEntity;
 import com.devel.pricetracker.application.models.repository.ItemRepository;
 import javassist.NotFoundException;
@@ -47,24 +48,30 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public ItemEntity create(ItemEntity itemEntity) {
+    public ItemEntity create(ItemDto itemDto) {
+        ItemEntity itemEntity = new ItemEntity();
         itemEntity.setId(null);
+        itemEntity.setName(itemDto.getName());
+        itemEntity.setUrl(itemDto.getUrl());
+        itemEntity.setSelector(itemDto.getSelector());
+        itemEntity.setBreakSelector(itemDto.getBreakSelector());
+        itemEntity.setDateFrom(LocalDateTime.now());
         return itemRepository.save(itemEntity);
     }
 
     @Override
-    public ItemEntity update(ItemEntity itemEntity) throws NotFoundException {
-        Long itemId = itemEntity.getId();
+    public ItemEntity update(ItemDto itemDto) throws NotFoundException {
+        Long itemId = itemDto.getId();
         Optional<ItemEntity> itemEntityOptional = itemRepository.findById(itemId);
         if (itemEntityOptional.isEmpty()) {
             logger.error(String.format("An error occurred during update Item with id: %d", itemId));
             throw new NotFoundException(String.format("An error occurred during update Item with id: %d", itemId));
         }
         ItemEntity itemEntityFromRepository = itemEntityOptional.get();
-        itemEntityFromRepository.setName(itemEntity.getName());
-        itemEntityFromRepository.setUrl(itemEntity.getUrl());
-        itemEntityFromRepository.setSelector(itemEntity.getSelector());
-        itemEntityFromRepository.setBreakSelector(itemEntity.getBreakSelector());
+        itemEntityFromRepository.setName(itemDto.getName());
+        itemEntityFromRepository.setUrl(itemDto.getUrl());
+        itemEntityFromRepository.setSelector(itemDto.getSelector());
+        itemEntityFromRepository.setBreakSelector(itemDto.getBreakSelector());
 
         itemRepository.save(itemEntityFromRepository);
         return itemEntityFromRepository;

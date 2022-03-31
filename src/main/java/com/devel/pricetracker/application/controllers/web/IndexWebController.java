@@ -1,5 +1,6 @@
 package com.devel.pricetracker.application.controllers.web;
 
+import com.devel.pricetracker.application.dto.ItemDto;
 import com.devel.pricetracker.application.dto.ItemDtoView;
 import com.devel.pricetracker.application.dto.ItemPriceDtoView;
 import com.devel.pricetracker.application.factory.ItemDtoViewFactory;
@@ -61,13 +62,12 @@ public class IndexWebController {
     public String createAction(@RequestParam String name, @RequestParam String url,
                                @RequestParam String selector, @RequestParam(value = "break_selector") String breakSelector,
                                @RequestParam(name = "parse_now") Optional<Boolean> parseNow) {
-        ItemEntity itemEntity = new ItemEntity();
-        itemEntity.setName(name);
-        itemEntity.setUrl(url);
-        itemEntity.setSelector(selector);
-        itemEntity.setBreakSelector(breakSelector);
-        itemEntity.setDateFrom(LocalDateTime.now());
-        ItemEntity createdItemEntity = itemService.create(itemEntity);
+        ItemDto itemDto = new ItemDto();
+        itemDto.setName(name);
+        itemDto.setUrl(url);
+        itemDto.setSelector(selector);
+        itemDto.setBreakSelector(breakSelector);
+        ItemEntity createdItemEntity = itemService.create(itemDto);
         try {
             if (createdItemEntity != null && parseNow.isPresent() && parseNow.get()) {
                 Optional<ItemPriceEntity> itemPriceEntityOptional = priceParser.parse(createdItemEntity);
@@ -85,13 +85,13 @@ public class IndexWebController {
     public String updateAction(@RequestParam Long id, @RequestParam String name, @RequestParam String url,
                                @RequestParam String selector, @RequestParam(value = "break_selector") String breakSelector,
                                @RequestParam(name = "parse_now") Optional<Boolean> parseNow) throws NotFoundException {
-        ItemEntity itemEntity = new ItemEntity();
-        itemEntity.setId(id);
-        itemEntity.setName(name);
-        itemEntity.setUrl(url);
-        itemEntity.setSelector(selector);
-        itemEntity.setBreakSelector(breakSelector);
-        ItemEntity updatedItemEntity = itemService.update(itemEntity);
+        ItemDto itemDto = new ItemDto();
+        itemDto.setId(id);
+        itemDto.setName(name);
+        itemDto.setUrl(url);
+        itemDto.setSelector(selector);
+        itemDto.setBreakSelector(breakSelector);
+        ItemEntity updatedItemEntity = itemService.update(itemDto);
         try {
             if (parseNow.isPresent() && parseNow.get()) {
                 Optional<ItemPriceEntity> itemPriceEntityOptional = priceParser.parse(updatedItemEntity);
@@ -104,7 +104,7 @@ public class IndexWebController {
         } catch (NotFoundException | IOException e) {
             logger.error(String.format("An error occurred during parse price %s: %s", updatedItemEntity.getUrl(), e.getMessage()));
         }
-        return String.format("redirect:/view/%d", itemEntity.getId());
+        return String.format("redirect:/view/%d", itemDto.getId());
     }
 
     @PostMapping("/delete/{id}")
