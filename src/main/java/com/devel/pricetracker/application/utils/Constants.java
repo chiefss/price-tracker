@@ -9,4 +9,6 @@ public class Constants {
 
     public static final String API_ERROR_TEMPLATE_NAME = "empty";
     public static final String WEB_ERROR_TEMPLATE_NAME = "error";
+
+    public static final int DETAIL_PRICES_LIMIT = 10;
 }

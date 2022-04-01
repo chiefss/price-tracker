@@ -11,6 +11,7 @@ import com.devel.pricetracker.application.models.entities.ItemPriceEntity;
 import com.devel.pricetracker.application.parsers.PriceParser;
 import com.devel.pricetracker.application.services.ItemPriceService;
 import com.devel.pricetracker.application.services.ItemService;
+import com.devel.pricetracker.application.utils.Constants;
 import com.devel.pricetracker.application.utils.CurrencyUtils;
 import javassist.NotFoundException;
 import org.jsoup.HttpStatusException;
@@ -49,7 +50,7 @@ public class IndexWebController {
     public String detailAction(Model model, @PathVariable Long id) throws NotFoundException {
         ItemEntity itemEntity = itemService.find(id);
         ItemDtoView itemDtoView = getItemDto(itemEntity);
-        List<ItemPriceDtoView> itemPriceDtoViews = itemPriceService.findAll(itemEntity).stream().limit(DETAIL_PRICES_LIMIT)
+        List<ItemPriceDtoView> itemPriceDtoViews = itemPriceService.findAll(itemEntity).stream().limit(Constants.DETAIL_PRICES_LIMIT)
                 .map(itemPriceEntity -> ItemPriceDtoViewFactory.create(itemPriceEntity)).collect(Collectors.toList());
         itemPriceDtoViews.forEach(itemPriceDto -> itemPriceDto.setFormatedPrice(CurrencyUtils.formatCurrency(itemPriceDto.getPrice())));
         List<ItemDtoView> itemDtoViews = getItemDtos();
@@ -221,8 +222,6 @@ public class IndexWebController {
         }
         return itemPriceEntities.get(0).getPrice();
     }
-
-    private final int DETAIL_PRICES_LIMIT = 10;
 
     private final ItemService itemService;
 
