@@ -1,10 +1,8 @@
 package com.devel.pricetracker.application.controllers.web;
 
-import com.devel.pricetracker.application.dto.ItemDto;
-import com.devel.pricetracker.application.dto.ItemDtoView;
-import com.devel.pricetracker.application.dto.ItemPriceDto;
-import com.devel.pricetracker.application.dto.ItemPriceDtoView;
+import com.devel.pricetracker.application.dto.*;
 import com.devel.pricetracker.application.factory.ItemDtoViewFactory;
+import com.devel.pricetracker.application.factory.ItemPriceDtoFactory;
 import com.devel.pricetracker.application.factory.ItemPriceDtoViewFactory;
 import com.devel.pricetracker.application.models.entities.ItemEntity;
 import com.devel.pricetracker.application.models.entities.ItemPriceEntity;
@@ -139,7 +137,16 @@ public class IndexWebController {
 
     @GetMapping("/parseAll")
     public String parseAllAction() {
-        priceParser.parseAll();
+        List<PriceParserResultDto> priceParserResultDtos = priceParser.parseAll();
+        for (PriceParserResultDto priceParserResultDto : priceParserResultDtos) {
+            ItemPriceEntity itemPriceEntity = priceParserResultDto.getItemPrice();
+            ItemPriceDto itemPriceDto = ItemPriceDtoFactory.create(itemPriceEntity.getItem().getId(), itemPriceEntity.getPrice());
+            try {
+                itemPriceService.create(itemPriceDto);
+            } catch (NotFoundException e) {
+                logger.error(String.format("An error occurred during parse all and save item price for item id \"%d\"", itemPriceEntity.getItem().getId()));
+            }
+        }
         return "redirect:/";
     }
 
@@ -153,9 +160,7 @@ public class IndexWebController {
         Optional<ItemPriceEntity> itemPriceEntityOptional = priceParser.parse(createdItemEntity);
         if (itemPriceEntityOptional.isPresent()) {
             ItemPriceEntity itemPriceEntity = itemPriceEntityOptional.get();
-            ItemPriceDto itemPriceDto = new ItemPriceDto();
-            itemPriceDto.setItemId(itemPriceEntity.getItem().getId());
-            itemPriceDto.setPrice(itemPriceEntity.getPrice());
+            ItemPriceDto itemPriceDto = ItemPriceDtoFactory.create(itemPriceEntity.getItem().getId(), itemPriceEntity.getPrice());
             itemPriceService.create(itemPriceDto);
         }
     }

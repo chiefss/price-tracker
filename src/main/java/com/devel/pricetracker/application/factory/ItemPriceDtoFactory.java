@@ -13,4 +13,8 @@ public class ItemPriceDtoFactory {
                 itemPriceEntity.getPrice(),
                 itemPriceEntity.getDateFrom());
     }
+
+    public static ItemPriceDto create(Long itemId, Float price) {
+        return new ItemPriceDto(null, itemId, price, null);
+    }
 }

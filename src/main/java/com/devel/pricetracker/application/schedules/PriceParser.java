@@ -1,11 +1,14 @@
 package com.devel.pricetracker.application.schedules;
 
+import com.devel.pricetracker.application.dto.ItemPriceDto;
 import com.devel.pricetracker.application.dto.PriceParserResultDto;
+import com.devel.pricetracker.application.factory.ItemPriceDtoFactory;
 import com.devel.pricetracker.application.models.entities.ItemEntity;
 import com.devel.pricetracker.application.models.entities.ItemPriceEntity;
 import com.devel.pricetracker.application.services.ItemPriceService;
 import com.devel.pricetracker.application.services.MailService;
 import com.devel.pricetracker.application.utils.CurrencyUtils;
+import javassist.NotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -38,8 +41,25 @@ public class PriceParser {
     public void parse() {
         if (appParserCronEnabled) {
             List<PriceParserResultDto> priceParserResultDtos = priceParser.parseAll();
+            saveItemPriceAll(priceParserResultDtos);
             notify(priceParserResultDtos);
         }
+    }
+
+    private void saveItemPriceAll(List<PriceParserResultDto> priceParserResultDtos) {
+        for (PriceParserResultDto priceParserResultDto : priceParserResultDtos) {
+            try {
+                saveItemPrice(priceParserResultDto);
+            } catch (NotFoundException e) {
+                logger.error(String.format("An error occurred during parse all by cron and save item price for item with id \"%d\"", priceParserResultDto.getItem().getId()));
+            }
+        }
+    }
+
+    private void saveItemPrice(PriceParserResultDto priceParserResultDto) throws NotFoundException {
+        ItemPriceEntity itemPriceEntity = priceParserResultDto.getItemPrice();
+        ItemPriceDto itemPriceDto = ItemPriceDtoFactory.create(itemPriceEntity.getItem().getId(), itemPriceEntity.getPrice());
+        itemPriceService.create(itemPriceDto);
     }
 
     private void notify(List<PriceParserResultDto> priceParserResultDtos) {

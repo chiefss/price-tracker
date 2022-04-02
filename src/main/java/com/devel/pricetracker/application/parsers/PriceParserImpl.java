@@ -46,15 +46,10 @@ public class PriceParserImpl implements PriceParser {
                     try {
                         Optional<ItemPriceEntity> itemPriceEntityOptional = parse(itemEntity);
                         if (itemPriceEntityOptional.isPresent()) {
-                            ItemPriceEntity itemPriceEntity = itemPriceEntityOptional.get();
-                            ItemPriceDto itemPriceDto = new ItemPriceDto();
-                            itemPriceDto.setItemId(itemPriceEntity.getItem().getId());
-                            itemPriceDto.setPrice(itemPriceEntity.getPrice());
-                            itemPriceService.create(itemPriceDto);
-                            return Optional.of(new PriceParserResultDto(itemEntity, true, null));
+                            return Optional.of(new PriceParserResultDto(itemEntity, itemPriceEntityOptional.get(), true, null));
                         }
                     } catch (NotFoundException | IOException e) {
-                        return Optional.of(new PriceParserResultDto(itemEntity, false, e.getMessage()));
+                        return Optional.of(new PriceParserResultDto(itemEntity, null, false, e.getMessage()));
                     }
                     return Optional.empty();
                 }
