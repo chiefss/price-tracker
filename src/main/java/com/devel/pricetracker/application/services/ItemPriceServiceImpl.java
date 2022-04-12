@@ -51,8 +51,7 @@ public class ItemPriceServiceImpl implements ItemPriceService {
         itemPriceEntity.setItem(itemEntity);
         itemPriceEntity.setPrice(itemPriceDto.getPrice());
         itemPriceEntity.setDateFrom(LocalDateTime.now());
-        ItemPriceEntity newEntity = itemPriceRepository.save(itemPriceEntity);
-        return newEntity;
+        return itemPriceRepository.save(itemPriceEntity);
     }
 
     public void delete(Long id) {

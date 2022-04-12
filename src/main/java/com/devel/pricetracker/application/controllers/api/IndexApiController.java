@@ -28,13 +28,7 @@ public class IndexApiController {
 
     @GetMapping("/api/prices/{id}")
     public List<ItemPriceDto> pricesAction(@PathVariable Long id) throws NotFoundException {
-        ItemEntity itemEntity;
-        try {
-            itemEntity = itemService.find(id);
-        } catch (NotFoundException e) {
-            logger.warn(String.format("An error occurred during find item prices for item with id \"%d\"", id));
-            throw new NotFoundException("An error occurred during find item prices for item with id \"%d\"", e);
-        }
+        ItemEntity itemEntity = itemService.find(id);
         List<ItemPriceDto> itemPriceDtos = itemPriceService.findAll(itemEntity).stream().map(itemPriceEntity -> ItemPriceDtoFactory.create(itemPriceEntity)).collect(Collectors.toList());
         itemPriceDtos.forEach(itemPriceDto -> itemPriceDto.setFormatedPrice(CurrencyUtils.formatCurrency(itemPriceDto.getPrice())));
         return itemPriceDtos;

@@ -42,10 +42,7 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public ItemEntity find(Long itemId) throws NotFoundException {
-        return itemRepository.findById(itemId).orElseThrow(() -> {
-            logger.warn(String.format("An error occurred during find Item with id: %d", itemId));
-            return new NotFoundException(String.format("An error occurred during find Item with id: %d", itemId));
-        });
+        return itemRepository.findById(itemId).orElseThrow(() -> new NotFoundException(String.format("An error occurred during find Item with id: %d", itemId)));
     }
 
     @Override
@@ -65,7 +62,6 @@ public class ItemServiceImpl implements ItemService {
         Long itemId = itemDto.getId();
         Optional<ItemEntity> itemEntityOptional = itemRepository.findById(itemId);
         if (itemEntityOptional.isEmpty()) {
-            logger.error(String.format("An error occurred during update Item with id: %d", itemId));
             throw new NotFoundException(String.format("An error occurred during update Item with id: %d", itemId));
         }
         ItemEntity itemEntityFromRepository = itemEntityOptional.get();
@@ -73,9 +69,7 @@ public class ItemServiceImpl implements ItemService {
         itemEntityFromRepository.setUrl(itemDto.getUrl());
         itemEntityFromRepository.setSelector(itemDto.getSelector());
         itemEntityFromRepository.setBreakSelector(itemDto.getBreakSelector());
-
-        itemRepository.save(itemEntityFromRepository);
-        return itemEntityFromRepository;
+        return itemRepository.save(itemEntityFromRepository);
     }
 
     @Override
