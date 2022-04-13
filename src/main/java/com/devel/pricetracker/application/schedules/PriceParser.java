@@ -48,10 +48,12 @@ public class PriceParser {
 
     private void saveItemPriceAll(List<PriceParserResultDto> priceParserResultDtos) {
         for (PriceParserResultDto priceParserResultDto : priceParserResultDtos) {
-            try {
-                saveItemPrice(priceParserResultDto);
-            } catch (NotFoundException e) {
-                logger.error(String.format("An error occurred during parse all by cron and save item price for item with id \"%d\"", priceParserResultDto.getItem().getId()));
+            if (priceParserResultDto.isSuccess()) {
+                try {
+                    saveItemPrice(priceParserResultDto);
+                } catch (NotFoundException e) {
+                    logger.error(String.format("An error occurred during parse all by cron and save item price for item with id \"%d\"", priceParserResultDto.getItem().getId()));
+                }
             }
         }
     }

@@ -139,12 +139,14 @@ public class IndexWebController {
     public String parseAllAction() {
         List<PriceParserResultDto> priceParserResultDtos = priceParser.parseAll();
         for (PriceParserResultDto priceParserResultDto : priceParserResultDtos) {
-            ItemPriceEntity itemPriceEntity = priceParserResultDto.getItemPrice();
-            ItemPriceDto itemPriceDto = ItemPriceDtoFactory.create(itemPriceEntity.getItem().getId(), itemPriceEntity.getPrice());
-            try {
-                itemPriceService.create(itemPriceDto);
-            } catch (NotFoundException e) {
-                logger.error(String.format("An error occurred during parse all and save item price for item id \"%d\"", itemPriceEntity.getItem().getId()));
+            if (priceParserResultDto.isSuccess()) {
+                ItemPriceEntity itemPriceEntity = priceParserResultDto.getItemPrice();
+                ItemPriceDto itemPriceDto = ItemPriceDtoFactory.create(itemPriceEntity.getItem().getId(), itemPriceEntity.getPrice());
+                try {
+                    itemPriceService.create(itemPriceDto);
+                } catch (NotFoundException e) {
+                    logger.error(String.format("An error occurred during parse all and save item price for item id \"%d\"", itemPriceEntity.getItem().getId()));
+                }
             }
         }
         return "redirect:/";
