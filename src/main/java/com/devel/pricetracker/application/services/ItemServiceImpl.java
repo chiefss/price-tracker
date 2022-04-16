@@ -7,12 +7,17 @@ import com.devel.pricetracker.application.models.repository.ItemRepository;
 import javassist.NotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class ItemServiceImpl implements ItemService {
@@ -25,11 +30,16 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public List<ItemEntity> findAll(boolean activatedOnly) {
-        List<ItemEntity> itemEntities = itemRepository.findAll(Sort.by("name").ascending()).stream().collect(Collectors.toList());
-        if (activatedOnly) {
-            itemEntities = itemEntities.stream().filter(itemEntity -> itemEntity.getDateTo() == null).collect(Collectors.toList());
-        }
-        return itemEntities;
+        return itemRepository.findAll(new Specification<ItemEntity>() {
+            @Override
+            public Predicate toPredicate(Root<ItemEntity> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
+                List<Predicate> predicates = new ArrayList<>();
+                if (activatedOnly) {
+                    predicates.add(criteriaBuilder.and(criteriaBuilder.isNull(root.get("dateTo"))));
+                }
+                return criteriaBuilder.and(predicates.toArray(new Predicate[predicates.size()]));
+            }
+        }, Sort.by("dateTo").ascending().and(Sort.by("name").ascending()));
     }
 
     @Override
@@ -40,7 +50,6 @@ public class ItemServiceImpl implements ItemService {
     @Override
     public ItemEntity create(ItemDto itemDto) {
         ItemEntity itemEntity = new ItemEntity();
-        itemEntity.setId(null);
         itemEntity.setName(itemDto.getName());
         itemEntity.setUrl(itemDto.getUrl());
         itemEntity.setSelector(itemDto.getSelector());
