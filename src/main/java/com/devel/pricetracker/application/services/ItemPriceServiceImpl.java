@@ -11,8 +11,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class ItemPriceServiceImpl implements ItemPriceService {
@@ -25,21 +25,11 @@ public class ItemPriceServiceImpl implements ItemPriceService {
 
     @Override
     public List<ItemPriceEntity> findAll(ItemEntity itemEntity) {
-        Iterable<ItemPriceEntity> itemPriceEntityIterable = itemPriceRepository.findAllByItemOrderByDateFromDesc(itemEntity);
-        List<ItemPriceEntity> itemPriceEntities = new ArrayList<>();
-        for (ItemPriceEntity itemPriceEntity : itemPriceEntityIterable) {
-            itemPriceEntities.add(itemPriceEntity);
-        }
-        return itemPriceEntities;
+        return itemPriceRepository.findAllByItemOrderByDateFromDesc(itemEntity).stream().collect(Collectors.toList());
     }
 
     public List<ItemPriceEntity> findLast(ItemEntity itemEntity) {
-        Iterable<ItemPriceEntity> itemPriceEntityIterable = itemPriceRepository.findTop2ByItemOrderByDateFromDesc(itemEntity);
-        List<ItemPriceEntity> itemPriceEntities = new ArrayList<>();
-        for (ItemPriceEntity itemPriceEntity : itemPriceEntityIterable) {
-            itemPriceEntities.add(itemPriceEntity);
-        }
-        return itemPriceEntities;
+        return itemPriceRepository.findTop2ByItemOrderByDateFromDesc(itemEntity).stream().collect(Collectors.toList());
     }
 
     @Override
@@ -47,7 +37,6 @@ public class ItemPriceServiceImpl implements ItemPriceService {
         Long itemId = itemPriceDto.getItemId();
         ItemEntity itemEntity = itemRepository.findById(itemId).orElseThrow(() -> new NotFoundException(String.format("An error occurred during create Item price and find Item with id: %d", itemId)));
         ItemPriceEntity itemPriceEntity = new ItemPriceEntity();
-        itemPriceEntity.setId(null);
         itemPriceEntity.setItem(itemEntity);
         itemPriceEntity.setPrice(itemPriceDto.getPrice());
         itemPriceEntity.setDateFrom(LocalDateTime.now());

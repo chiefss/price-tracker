@@ -5,17 +5,13 @@ import com.devel.pricetracker.application.models.entities.ItemEntity;
 import com.devel.pricetracker.application.models.repository.ItemPriceRepository;
 import com.devel.pricetracker.application.models.repository.ItemRepository;
 import javassist.NotFoundException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -29,11 +25,7 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public List<ItemEntity> findAll(boolean activatedOnly) {
-        Iterable<ItemEntity> itemEntityIterable = itemRepository.findAll(Sort.by("name").ascending());
-        List<ItemEntity> itemEntities = new ArrayList<>();
-        for (ItemEntity itemEntity : itemEntityIterable) {
-            itemEntities.add(itemEntity);
-        }
+        List<ItemEntity> itemEntities = itemRepository.findAll(Sort.by("name").ascending()).stream().collect(Collectors.toList());
         if (activatedOnly) {
             itemEntities = itemEntities.stream().filter(itemEntity -> itemEntity.getDateTo() == null).collect(Collectors.toList());
         }
@@ -59,12 +51,7 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public ItemEntity update(ItemDto itemDto) throws NotFoundException {
-        Long itemId = itemDto.getId();
-        Optional<ItemEntity> itemEntityOptional = itemRepository.findById(itemId);
-        if (itemEntityOptional.isEmpty()) {
-            throw new NotFoundException(String.format("An error occurred during update Item with id: %d", itemId));
-        }
-        ItemEntity itemEntityFromRepository = itemEntityOptional.get();
+        ItemEntity itemEntityFromRepository = find(itemDto.getId());
         itemEntityFromRepository.setName(itemDto.getName());
         itemEntityFromRepository.setUrl(itemDto.getUrl());
         itemEntityFromRepository.setSelector(itemDto.getSelector());
@@ -97,6 +84,4 @@ public class ItemServiceImpl implements ItemService {
     private final ItemRepository itemRepository;
 
     private final ItemPriceRepository itemPriceRepository;
-
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 }
