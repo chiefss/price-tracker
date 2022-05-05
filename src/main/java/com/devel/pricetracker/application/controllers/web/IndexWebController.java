@@ -75,7 +75,7 @@ public class IndexWebController {
                 logger.error(String.format("An error occurred during parse price %s: %s", createdItemEntity.getUrl(), e.getMessage()));
             }
         }
-        return "redirect:/";
+        return String.format("redirect:/view/%d", createdItemEntity.getId());
     }
 
     @PostMapping("/update")
