@@ -61,7 +61,7 @@ public class TestIndexWebController {
         ItemEntity itemEntity = itemEntityOptional.get();
 
         Assertions.assertEquals(HttpStatus.FOUND, response.getStatusCode());
-        Assertions.assertEquals("/", response.getHeaders().getLocation().getPath());
+        Assertions.assertEquals(String.format("/view/%d", itemEntity.getId()), response.getHeaders().getLocation().getPath());
         Assertions.assertEquals(itemName, itemEntity.getName());
         Assertions.assertEquals(itemUrl, itemEntity.getUrl());
         Assertions.assertEquals(itemSelector, itemEntity.getSelector());
