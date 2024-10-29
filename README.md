@@ -1,3 +1,5 @@
+Moved to https://github.com/chiefss/smart-tracker
+
 # Price tracker
 
 An application for price monitoring. Monitors price changes and displays them as a graph.
